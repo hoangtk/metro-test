@@ -1,0 +1,33 @@
+.openerp .oe_list_content > tbody > tr > td[data-field='state']
+{
+  white-space: nowrap ; 
+}
+.openerp .oe_list_content > tbody > tr > td[data-field='order_state']
+{
+  white-space: nowrap ; 
+}
+/*
+.openerp .oe_record_thread{
+    display: block;
+    margin-left: 16px;
+    margin-right: 16px;
+}
+*/
+.openerp .oe_form .oe_subtotal_footer label.oe_form_label {
+  font-weight: normal;
+}
+.openerp .oe_form_sheetbg {
+  padding: 16px 0;
+  max-width: none !important;
+}
+.openerp .oe_form_sheet_width_wider {
+  max-width: 1130px;
+}
+
+.openerp .oe_form_sheet_width {
+  max-width: 100%;
+}
+/*extend the file upload's file name length*/
+.openerp .oe_form_editable .oe_form .oe_form_field_binary input {
+  width: 150px;
+}

@@ -1,0 +1,20 @@
+@CHARSET "UTF-8";
+td [title^="P "],td [title^="B "],td [title^="D "],td [title^="W "],td [title^="Ct "],td [title^="Ps "] {
+    background: #efeff8;
+}
+td [data-field^="P_"],td [data-field^="B_"],td [data-field^="D_"],td [data-field^="W_"],td [data-field^="Ct_"],td [data-field^="Ps_"] {
+    background: #efeff8;
+}
+.metro_header, .metro_header_last{
+	display:block;
+	width:100%;
+	height:100%;
+	background: #eeeeee;
+    vertical-align: top;
+    font-weight:bold;
+	border-bottom: 2px solid #cacaca;
+    border-right: 1px solid #dfdfdf;
+}
+.metro_header_last{
+	border-right:none;
+}

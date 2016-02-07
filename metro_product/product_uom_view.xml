@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+		<record id="product_measure_form_view" model="ir.ui.view">
+            <field name="name">product_measure_form_view</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+            <data>
+                <field name="mes_type" position="replate">
+                </field>
+                <field name="uom_id" position="before">
+                    <label for="measure_type"/>
+                    <div>
+                        <field name="measure_type" class="oe_inline" on_change="onchange_measure_type(default_code,measure_type)"/> 
+                        <button name="open_msp_uom_list" type="object" icon="gtk-unindent" 
+                        	context="{'default_category_id':uom_categ_id,'force_categ':True}"
+                        	attrs="{'invisible': ['|',('measure_type','!=','msp'),'|',('uom_categ_id','=', False),('uom_categ_id','=',  %(uom_categ_msp_dummy)d)]}"
+                            help="Open to view or edit the prodcut's unit of measure list! 查看维护产品相关的单位列表!"/>
+                    </div>
+                    <field name="uom_categ_id" attrs="{'invisible': [('measure_type','!=','mmp')]}"/>
+                </field>
+                <field name="uom_po_id" position="after">
+                	<field name = "uom_po_price"/>
+                	<field name = "uom_po_factor"/>
+                </field>
+                <field name="uom_id" position="attributes">
+                    <attribute name="domain">[('category_id','=',uom_categ_id)]</attribute>
+                    <attribute name="help">Default Unit of Measure used for all stock operation. For the new product, please save it first, and then you can define the units.</attribute>
+                </field>
+                <field name="uom_po_id" position="attributes">
+                	<attribute name="domain">[('category_id','=',uom_categ_id)]</attribute>
+                </field>              
+            </data>
+            </field>
+		</record>
+		<record id="product_uom_measure_tree_view" model="ir.ui.view">
+            <field name="name">product_uom_measure_tree_view</field>
+            <field name="model">product.uom</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="product.product_uom_tree_view"/>
+            <field name="arch" type="xml">
+            <data>
+                <field name="category_id" position="attributes">
+                    <attribute name="invisible">context.get('force_categ')</attribute>
+                </field>
+                <field name="category_id" position="after">
+                    <field name="uom_type"/>
+                    <field name="factor_display"/>
+                    <field name="create_uid"/>
+                    <field name="create_date"/>
+                </field>
+            </data>
+            </field>
+		</record>			
+		<record id="product_uom_measure_form_view" model="ir.ui.view">
+            <field name="name">product_uom_measure_form_view</field>
+            <field name="model">product.uom</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_uom_form_view"/>
+            <field name="arch" type="xml">
+            <data>
+                <field name="category_id" position="attributes">
+                    <attribute name="invisible">context.get('force_categ')</attribute>
+                </field>
+                <field name="rounding" position="after">
+                    <field name="create_uid"/>
+                    <field name="create_date"/>
+                </field>
+            </data>
+            </field>
+		</record> 
+		
+        <record id="product_uom_measure_search_view" model="ir.ui.view">
+            <field name="name">product_uom_measure_search_view</field>
+            <field name="model">product.uom</field>
+            <field name="arch" type="xml">
+                <search string="Product UOM">
+                   <field name="name"/>
+                   <field name="category_id"/>
+                </search>
+            </field>
+        </record>
+        		
+        <record id="product.product_uom_form_action" model="ir.actions.act_window">
+        	<field name="search_view_id" ref="product_uom_measure_search_view"/>
+        </record>
+        		
+	</data>		    
+</openerp>	

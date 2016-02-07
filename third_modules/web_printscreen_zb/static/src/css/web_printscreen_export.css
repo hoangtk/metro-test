@@ -1,0 +1,35 @@
+@charset "utf-8";
+
+.openerp .oe_ul_export_button {
+  float: right;
+  height: 24px;
+  line-height: 24px;
+  display: inline-block;
+  border: 1px solid #ababab;
+  cursor: pointer;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  margin-right: 8px;
+}
+
+.openerp ul.oe_ul_export_button {
+  padding: 1px;
+  margin: 0;
+}
+
+.openerp .oe_ul_export_button li {
+  height: 24px;
+  line-height: 24px;
+  padding: 1px;
+  margin: 0;
+  list-style-type: none;
+  float: left;
+  border-right: 1px solid #ababab;
+}
+.openerp .oe_ul_export_button li a{
+    color : #4c4c4c;
+}
+.openerp .oe_ul_export_button li:last-child {
+  border: none;
+}

@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="metro_mrp_production_form_view" model="ir.ui.view">
+            <field name="name">metro_mrp_production_form_view</field>
+            <field name="model">mrp.production</field>
+            <field name="inherit_id" ref="metro_mrp.metro_mrp_production_form_view"/>
+            <field name="arch" type="xml">
+                <data>            
+                    <xpath expr="//page[@string='Consumed Products']" position='before'>
+                        <page string="Drawing Orders">
+                            <button name="action_drawing_order_generate" states="draft"
+                                string="Generate Drawing Orders" type="object"
+                                icon="terp-stock_format-scientific"/>
+                            <field name="drawing_order_ids" widget="one2many_list" colspan="4">
+                                <tree string="Drawing Order">
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="bom_file_name" invisible="1"/>
+                                    <field name="bom_file" widget="drawing_url" filename="bom_file_name" attrs="{'invisible':[('bom_file_name', '==', False)]}"/>                                      
+                                    <field name="prepare_qty"/>
+                                    <field name="done_qty"/>
+                                    <field name="need_qty"/>
+                                    <field name="state"/>
+                                    <button name="generate_tasks" string="Generate Tasks" type="object" class="oe_highlight" icon="gtk-media-play"/>
+                                    
+                                </tree>
+                                <form string="Drawing Order" version="7.0">
+                                    <header>
+                                        <button name="action_ready" string="Ready" states="draft,rejected" class="oe_highlight" type="object"/>
+                                        <button name="action_confirm" string="Confirm" states="ready" class="oe_highlight" type="object" groups="metro_mrp.group_mrp_supervisor"/>
+                                        <button name="action_approve" string="Approve" states="confirmed" class="oe_highlight" type="object" groups="mrp.group_mrp_manager"/>
+                                        <button name="action_reject" string="Reject" states="confirmed" type="object" groups="mrp.group_mrp_manager"/>
+                                        
+                                        <button name="action_draft" string="Set to Draft" states="ready" type="object"/>
+                                        <button name="action_draft" string="Set to Draft" states="confirmed,cancel" type="object" groups="metro_mrp.group_mrp_supervisor"/>
+                                        <button name="action_draft" string="Set to Draft" states="approved,in_progress" type="object" groups="mrp.group_mrp_manager"/>
+                                        
+                                        <button name="action_cancel" string="Cancel" states="draft,rejected" type="object"/>
+                                        <button name="action_cancel" string="Cancel" states="confirmed" type="object"  groups="metro_mrp.group_mrp_supervisor"/>
+                                        <button name="action_cancel" string="Cancel" states="approved,in_progress" type="object" groups="mrp.group_mrp_manager"/>
+                                        <button name="update_parts" string="Update Parts" type="object" class="oe_inline" states="draft,rejected"/>
+                                        <button string="Upload Part Drawings" name="%(action_upload_multi_drawings)d" type="action" states="draft,rejected" class="oe_inline" />
+                                        <button name="print_pdf" string="Print PDF" type="object" class="oe_inline" />
+                                        
+                                        <field name="state" widget="statusbar" statusbar_visible="draft,ready,confirmed,approved"/>                 
+                                    </header>                                
+                                    <group col="4">
+                                        <field name="name"/>
+                                        <field name="product_id"/>
+                                        <field name="bom_file_name" invisible="1"/>
+                                        <field name="bom_file" filename="bom_file_name"/>  
+                                        <field name="prepare_qty"/>
+                                        <field name="done_qty"/>
+                                        <field name="need_qty"/>
+                                        <!--<field name="state" invisible="1"/>-->
+                                        <separator string="Drawing Order Lines" colspan="4"/>
+                                        <field name="order_lines" widget="one2many_list" colspan="4" nolabel="1">
+                                            <tree string="Drawing Order Lines">
+                                                <field name="product_id"/>
+                                                <field name="drawing_file_name" invisible="1"/>
+                                                <field name="drawing_file" widget="drawing_url" filename="drawing_file_name" attrs="{'invisible':[('drawing_file_name', '==', False)]}"/>                                            
+                                                <field name="work_steps" readonly="1"/>
+                                                <field name="P_prepare_qty" attrs="{'invisible':[('P_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="P_done_qty" attrs="{'invisible':[('P_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="P_need_qty" attrs="{'invisible':[('P_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Fc_prepare_qty" attrs="{'invisible':[('Fc_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Fc_done_qty" attrs="{'invisible':[('Fc_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Fc_need_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="B_prepare_qty" attrs="{'invisible':[('B_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="B_done_qty" attrs="{'invisible':[('B_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="B_need_qty" attrs="{'invisible':[('B_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ma_prepare_qty" attrs="{'invisible':[('Ma_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ma_done_qty" attrs="{'invisible':[('Ma_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ma_need_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="D_prepare_qty" attrs="{'invisible':[('D_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="D_done_qty" attrs="{'invisible':[('D_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="D_need_qty" attrs="{'invisible':[('D_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Mi_prepare_qty" attrs="{'invisible':[('Mi_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Mi_done_qty" attrs="{'invisible':[('Mi_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Mi_need_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="W_prepare_qty" attrs="{'invisible':[('W_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="W_done_qty" attrs="{'invisible':[('W_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="W_need_qty" attrs="{'invisible':[('W_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="A_prepare_qty" attrs="{'invisible':[('A_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="A_done_qty" attrs="{'invisible':[('A_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="A_need_qty" attrs="{'invisible':[('A_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ct_prepare_qty" attrs="{'invisible':[('Ct_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ct_done_qty" attrs="{'invisible':[('Ct_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ct_need_qty" attrs="{'invisible':[('Ct_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Bt_prepare_qty" attrs="{'invisible':[('Bt_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Bt_done_qty" attrs="{'invisible':[('Bt_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Bt_need_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ps_prepare_qty" attrs="{'invisible':[('Ps_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ps_done_qty" attrs="{'invisible':[('Ps_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="Ps_need_qty" attrs="{'invisible':[('Ps_need_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="G_prepare_qty" attrs="{'invisible':[('G_prepare_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="G_done_qty" attrs="{'invisible':[('G_done_qty', '==', 0)]}" readonly="1"/>
+                                                <field name="G_need_qty" attrs="{'invisible':[('G_need_qty', '==', 0)]}" readonly="1"/>
+                                            </tree>
+                                        </field>
+                                    </group>
+                                </form>          
+                            </field>
+                        </page>
+                    </xpath>                    
+                </data>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="project_task_with_drawing_mfg_form_view">
+            <field name="name">project_task_with_drawing_mfg_form_view</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="metro_project.project_task_mfg_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="attrs">{"readonly":[("state","!=","draft")],"required":True}</attribute>
+                </xpath>
+                <xpath expr="//field[@name='id']" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </xpath>
+                <xpath expr="//field[@name='private']" position="attributes">
+                    <attribute name="attrs">{"readonly":[("state","!=","draft")]}</attribute>
+                </xpath>    
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="attrs">{"readonly":[("state","!=","draft")]}</attribute>
+                </xpath>                            
+                <xpath expr="//field[@name='dept_id']" position="attributes">
+                    <attribute name="attrs">{"invisible":[("project_type","!=","mfg")],"readonly":[("state","!=","draft")],"required":[("project_type","=","mfg")]}</attribute>
+                </xpath>
+                <xpath expr="//field[@name='workorder_id']" position="attributes">
+                    <attribute name="attrs">{"invisible":[("project_type","!=","mfg")],"readonly":[("state","!=","draft")],"required":[("project_type","=","mfg")]}</attribute>
+                </xpath>                
+                <xpath expr="//field[@name='dept_mgr_id']" position="attributes">
+                    <attribute name="attrs">{"invisible":[("project_type","!=","mfg")],"readonly":[("state","!=","draft")]}</attribute>
+                </xpath>    
+                <xpath expr="//field[@name='date_start']" position="before">
+                    <field name="date_issued"/>
+                </xpath>                        
+                <xpath expr="//field[@name='date_deadline']" position="before">
+                    <field name="prepare_qty"/>
+                    <field name="done_qty"/>
+                    <field name="need_qty"/>
+                </xpath>    
+                <xpath expr="//field[@name='dept_id']" position="after">
+                     <field name="dept_code" invisible="1"/>
+                </xpath> 
+                <xpath expr="//field[@name='workcenter_id']" position="before">
+                     <field name="big_subassembly_id" attrs="{'invisible':[('project_type','!=','mfg')]}"/>
+                </xpath>
+                <xpath expr="//page[@string='Employees']" position="before">
+                    <page string="Tak Lines" attrs="{'invisible':[('project_type','!=','mfg')]}">
+                        <field name="task_lines" nolabel="1" colspan="4" attrs="{'readonly': [('state','in',['draft','done','cancelled'])]}">
+                            <tree string="Task Lines" editable="bottom">
+                                <field name="product_id" readonly="1"/>
+                                <field name="prepare_qty" readonly="1" attrs="{'invisible':[('prepare_qty', '==', 0)]}" sum="Total Prepare Quantity"/>
+                                <field name="done_qty" attrs="{'invisible':[('need_qty', '==', 0)],'readonly':['|','&amp;',('state','!=','on_working'),('state','!=','done'),('prepare_qty','==',0)]}" sum="Total Done Quantity"/>
+                                <field name="need_qty" readonly="1" attrs="{'invisible':[('need_qty', '==', 0)]}" sum="Total Need Quantity"/>
+                                <field name="next_step" readonly="1"/>
+                                <field name="state" readonly="1" attrs="{'invisible':[('need_qty', '==', 0)]}"/>
+                            </tree>
+                        </field>
+                    </page>                
+                    <page string="Drawing Order Lines" attrs="{'invisible':[('project_type','!=','mfg')]}">
+                        <field name="drawing_order_lines" nolabel="1" colspan="4" context="{'dept_code':dept_code}" readonly="1">
+                            <tree string="Lines" editable="bottom">
+                                <field name="product_id" attrs="{'readonly':[('status','!=','')]}"/>
+                                <field name="part_type"/>
+                                <field name="drawing_file_name" invisible="1"/>
+                                <field name="drawing_file" filename="drawing_file_name" attrs="{'invisible':[('drawing_file_name', '==', False)]}" widget="drawing_url"/>
+                                <field name="work_steps"  class="metro_high_light"/>
+                                <field name="P_prepare_qty" class="metro_high_light" attrs="{'invisible':[('P_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="P_done_qty" class="metro_high_light" attrs="{'invisible':[('P_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="P_need_qty" class="metro_high_light" attrs="{'invisible':[('P_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Fc_prepare_qty" attrs="{'invisible':[('Fc_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Fc_done_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Fc_need_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="B_prepare_qty" class="metro_high_light" attrs="{'invisible':[('B_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="B_done_qty" class="metro_high_light" attrs="{'invisible':[('B_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="B_need_qty" class="metro_high_light" attrs="{'invisible':[('B_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ma_prepare_qty" attrs="{'invisible':[('Ma_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ma_done_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ma_need_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="D_prepare_qty" class="metro_high_light" attrs="{'invisible':[('D_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="D_done_qty" class="metro_high_light" attrs="{'invisible':[('D_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="D_need_qty" class="metro_high_light" attrs="{'invisible':[('D_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Mi_prepare_qty" attrs="{'invisible':[('Mi_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Mi_done_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Mi_need_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="W_prepare_qty" class="metro_high_light" attrs="{'invisible':[('W_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="W_done_qty" class="metro_high_light" attrs="{'invisible':[('W_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="W_need_qty" class="metro_high_light" attrs="{'invisible':[('W_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="A_prepare_qty" attrs="{'invisible':[('A_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="A_done_qty" attrs="{'invisible':[('A_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="A_need_qty" attrs="{'invisible':[('A_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ct_prepare_qty" class="metro_high_light" attrs="{'invisible':[('Ct_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ct_done_qty" class="metro_high_light" attrs="{'invisible':[('Ct_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ct_need_qty" class="metro_high_light" attrs="{'invisible':[('Ct_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Bt_prepare_qty" attrs="{'invisible':[('Bt_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Bt_done_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Bt_need_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ps_prepare_qty" class="metro_high_light" attrs="{'invisible':[('Ps_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ps_done_qty" class="metro_high_light" attrs="{'invisible':[('Ps_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="Ps_need_qty" class="metro_high_light" attrs="{'invisible':[('Ps_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="G_prepare_qty" attrs="{'invisible':[('G_prepare_qty', '==', 0)],'readonly': True}"/>
+                                <field name="G_done_qty" attrs="{'invisible':[('G_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="G_need_qty" attrs="{'invisible':[('G_need_qty', '==', 0)],'readonly': True}"/>
+                                <field name="status" readonly="1"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record> 
+        <!-- MFG Task Kanban View -->
+        <record model="ir.ui.view" id="metro_project.view_mfg_task_kanban">
+            <field name="name">project.mfg.task.kanban</field>
+            <field name="model">project.task</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="dept_id" quick_create="0" edit="false">
+                    <field name="stage_color"/>
+                    <field name="priority"/>
+                    <field name="stage_id"/>
+                    <field name="user_id"/>
+                    <field name="user_email"/>
+                    <field name="description"/>
+                    <field name="sequence"/>
+                    <field name="state" groups="base.group_no_one"/>
+                    <field name="kanban_state"/>
+                    <field name="remaining_hours" sum="Remaining Time" groups="project.group_time_work_estimation_tasks"/>
+                    <field name="date_deadline"/>
+                    <field name="message_summary"/>
+                    <field name="categ_ids"/>
+                    <field name="mfg_ids"/>
+                    <field name="product"/>
+                    <field name="dept_id"/>
+                    <field name="dept_mgr_id"/>
+                    <field name="progress"/>
+                    <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.stage_color.raw_value)} oe_kanban_card oe_kanban_global_click_edit">
+                            <div class="oe_dropdown_toggle oe_dropdown_kanban" groups="base.group_user">
+                                <span class="oe_e">í</span>
+                                <ul class="oe_dropdown_menu">
+                                    <t t-if="widget.view.is_action_enabled('edit')"><li><a type="edit">Edit...</a></li></t>
+                                    <t t-if="widget.view.is_action_enabled('delete')"><li><a type="delete">Delete</a></li></t>
+                                    <li>
+                                      <ul class="oe_kanban_project_times" groups="project.group_time_work_estimation_tasks">
+                                        <li><a name="set_remaining_time_1" type="object" class="oe_kanban_button">1</a></li>
+                                        <li><a name="set_remaining_time_2" type="object" class="oe_kanban_button">2</a></li>
+                                        <li><a name="set_remaining_time_5" type="object" class="oe_kanban_button">5</a></li>
+                                        <li><a name="set_remaining_time_10" type="object" class="oe_kanban_button">10</a></li>
+                                        <li><a name="do_open" states="draft" string="Validate planned time" type="object" class="oe_kanban_button oe_kanban_button_active">!</a></li>
+                                      </ul>
+                                    </li>
+                                    <li><ul class="oe_kanban_colorpicker" data-field="stage_color"/></li>
+                                </ul>
+                            </div>
+
+                            <div class="oe_kanban_content">
+                                <div><b><field name="mfg_ids"/></b></div>
+                                <div>
+                                    <field name="product"/><br/>
+                                    <field name="workorder_id"/><br/>
+                                    <field name="stage_id"/><br/>
+                                    Qty: <field name="prepare_qty"/>,<field name="done_qty"/>/<field name="need_qty"/><br/>
+                                    <field name="date_deadline"/><br/>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <t groups="base.group_user">
+                                        <a t-if="record.kanban_state.raw_value === 'normal'" type="object" string="In Progress" name="set_kanban_state_done" class="oe_kanban_status"> </a>
+                                        <a t-if="record.kanban_state.raw_value === 'done'" type="object" string="Ready for next stage" name="set_kanban_state_blocked" class="oe_kanban_status oe_kanban_status_green"> </a>
+                                        <a t-if="record.kanban_state.raw_value === 'blocked'" type="object" string="Blocked" name="set_kanban_state_normal" class="oe_kanban_status oe_kanban_status_red"> </a>
+                                        <a t-if="record.priority.raw_value > 0" type="object" string="Normal" name="set_high_priority" class="oe_e oe_star_off">7</a>
+                                        <a t-if="record.priority.raw_value == 0" type="object" string="Very Important" name="set_normal_priority" class="oe_e oe_star_on">7</a>
+                                    </t>
+                                    <img t-att-src="kanban_image('hr.employee', 'image_small', record.dept_mgr_id.raw_value)" t-att-title="record.dept_mgr_id.value" width="24" height="24" class="oe_kanban_avatar"/>
+                                </div>
+                                <div class="oe_kanban_footer_left">
+                                    <span groups="project.group_time_work_estimation_tasks" title="Complete Percentage">
+                                        <t t-esc="Math.round(record.progress.raw_value)"/> %%
+                                    </span>
+                                    <input type="checkbox" t-att-data-id="record.id.raw_value" 
+                                        class="oe_kanban_record_selector oe_kanban_noaction" t-att-checked="checked" title="Select"/>
+                                </div>
+                            </div>
+                            <div class="oe_clear"></div>
+                        </div>
+                    </t>
+                    </templates>
+                </kanban>
+            </field>
+         </record> 
+        <record id="metro_project.view_task_search_form_extend" model="ir.ui.view">
+            <field name="name">view_task_search_form_extend</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_search_form"/>
+            <field name="arch" type="xml">
+                <field name="project_id" position="after">
+                    <field name="project_type"/>
+                    <field name="big_subassembly_id"/>
+                    <field name="stage_id" domain="[]"/>
+                    <field name="priority"/>
+                    <field name="categ_ids"/>
+                    <field name="daily_date"
+                        filter_domain="['|',('date_start','=',False),('date_start','&lt;=', self + ' 23:59:59'),'|',('date_end','=',False),('date_end','&gt;=', self + ' 00:00:00')]"/>
+                    <filter icon="terp-go-today" string="Today's Tasks" 
+                        domain="['|',('date_start','=',False),('date_start','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),'|',('date_end','=',False),('date_end','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]"/>
+                </field>
+            </field>
+        </record>     
+        <record id="metro_project.project_task_mfg_search_view" model="ir.ui.view">
+            <field name="name">project_task_mfg_search_view</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="metro_project.view_task_search_form_extend"/>
+            <field name="arch" type="xml">
+                <field name="name" position="replace">
+                    <field name="name" filter_domain="['|',('name','ilike',self),('workorder_id.name','ilike',self)]" string="Tasks"/>
+                </field>
+                <field name="project_type" position="after">
+                    <field name="dept_id"/>
+                    <field name="dept_mgr_id"/>
+                    <field name="workorder_id"/>
+                    <field name="workcenter_id"/>
+                    <field name="production_id"/>   
+                    <field name="mfg_ids" widget="many2many_tags"/>
+                    <field name="multi_mfg_ids_search"/>
+                    <field name="product"/>
+                </field>
+                <filter string="End Date" position="after">
+                    <separator/>
+                    <filter string="Team" name="group_dept_id" icon="terp-folder-violet" domain="[]" context="{'group_by':'dept_id'}"/>
+                    <filter string="Work Order" name="group_workorder_id" icon="terp-folder-violet" domain="[]" context="{'group_by':'workorder_id'}"/>
+                </filter>
+                <xpath expr="//filter[@name='draft']" position="replace"></xpath>
+                <xpath expr="//filter[@name='open']" position="replace"></xpath>
+                <xpath expr="//filter[@string='Pending']" position="replace">
+                    <filter name="created" string="Waiting on Parts" domain="[('stage_id','like','Waiting On Parts')]" help="Waiting On Part Tasks" icon="terp-camera_test"/>
+                    <filter name="pending" string="Pending" domain="[('stage_id','like','Pending')]" help="Pending Tasks" icon="terp-camera_test"/>
+                    <filter name="in_progress" string="In Progress" domain="[('stage_id','like','In Progress')]" help="In Progress Tasks" icon="terp-camera_test"/>
+                    <filter name="miss_deadline" string="Missed Deadline" domain="[('stage_id','like','Missed Dealine')]" help="Missed Deadline Tasks" icon="terp-camera_test"/>
+                    <filter name="done" string="Done" domain="[('state','=','done')]" help="Done Tasks" icon="terp-camera_test"/>
+                    <filter name="cancel" string="Cancel" domain="[('state','=','cancelled')]" help="Cancelled Tasks" icon="terp-camera_test"/>
+                    <filter name='not_done_cancelled' string="NotDoneCancel" domain="[('state','not in',('cancelled','done'))]" help="Tasks except done and cancelled" icon="terp-gtk-media-pause"/>
+                </xpath>                
+            </field>
+        </record>                 
+<!-- Handle 'Download PDF and Download Selected PDF' in kanban view -->
+        <record id="action_server_project_task_download_pdf" model="ir.actions.server">
+            <field name="name">Download PDF</field>
+            <field name="condition">True</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_project_task" />
+            <field name="state">code</field>
+            <!-- the 'action' will be get actions_servre.run() to return to calling client -->
+            <field name="code">action=self.download_pdf(cr, uid, context.get('active_ids', []), context=context)</field>
+        </record>
+
+        <record model="ir.values" id="action_project_task_download_pdf">
+            <field name="name">action_project_task_download_pdf</field>
+            <field name="action_id" ref="action_server_project_task_download_pdf" />
+            <field name="value" eval="'ir.actions.server,' + str(ref('action_server_project_task_download_pdf'))" />
+            <field name="key">action</field>
+            <field name="model_id" ref="model_project_task" />
+            <field name="model">project.task</field>
+            <field name="key2">client_action_multi</field>
+        </record>    
+        <record id="action_server_project_task_download_selected_pdf" model="ir.actions.server">
+            <field name="name">Download Selected PDF</field>
+            <field name="condition">True</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_project_task" />
+            <field name="state">code</field>
+            <!-- the 'action' will be get actions_servre.run() to return to calling client -->
+            <field name="code">action=self.download_pdf(cr, uid, context.get('active_ids', []), context=context)</field>
+        </record>
+
+        <record model="ir.values" id="action_project_task_download_selected_pdf">
+            <field name="name">action_project_task_download_selected_pdf</field>
+            <field name="action_id" ref="action_server_project_task_download_selected_pdf" />
+            <field name="value" eval="'ir.actions.server,' + str(ref('action_server_project_task_download_selected_pdf'))" />
+            <field name="key">action</field>
+            <field name="model_id" ref="model_project_task" />
+            <field name="model">project.task</field>
+            <field name="key2">client_action_multi</field>
+        </record>                               
+    </data>
+</openerp>

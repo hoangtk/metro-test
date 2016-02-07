@@ -1,0 +1,441 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+    <record model="ir.ui.view" id="view_drawing_order_form">
+    	<field name="name">view_drawing_order_form</field>
+    	<field name="model">drawing.order</field>
+    	<field name="arch" type="xml">
+    		<form string="Drawing Order" version="7.0">
+    			<header>
+    				<button name="action_ready" string="Ready" states="draft,rejected" class="oe_highlight" type="object"/>
+    				<button name="action_confirm" string="Confirm" states="ready" class="oe_highlight" type="object" groups="metro_mrp.group_mrp_supervisor"/>
+    				<button name="action_approve" string="Approve" states="confirmed" class="oe_highlight" type="object" groups="mrp.group_mrp_manager"/>
+    				<button name="action_reject" string="Reject" states="confirmed" type="object" groups="mrp.group_mrp_manager"/>
+    				
+    				<button name="action_draft" string="Set to Draft" states="ready" type="object"/>
+    				<button name="action_draft" string="Set to Draft" states="confirmed,cancel" type="object" groups="metro_mrp.group_mrp_supervisor"/>
+    				<button name="action_draft" string="Set to Draft" states="approved,in_progress" type="object" groups="mrp.group_mrp_manager"/>
+    				
+    				<button name="action_cancel" string="Cancel" states="draft,rejected" type="object"/>
+    				<button name="action_cancel" string="Cancel" states="confirmed" type="object"  groups="metro_mrp.group_mrp_supervisor"/>
+    				<button name="action_cancel" string="Cancel" states="approved,in_progress" type="object" groups="mrp.group_mrp_manager"/>
+    				
+    				<field name="state" widget="statusbar" statusbar_visible="draft,ready,confirmed,approved"/>    				
+    			</header>
+    			<!-- <sheet> -->
+    				<group>
+    					<h1><field name="name"/></h1>
+	                    <div class="oe_right oe_button_box" name="buttons">
+	                    		<button name="update_parts" string="Update Parts" type="object" class="oe_inline" states="draft,rejected"/>
+	                    		<button string="Upload Part Drawings" name="%(action_upload_multi_drawings)d" type="action" states="draft,rejected" class="oe_inline" />
+	                    		<button name="print_pdf" string="Print PDF" type="object" class="oe_inline" />
+	                    </div>
+    				</group>
+                 	<group style="color:red">
+                		<field name="reject_message" states="rejected" readonly="1"/>
+                	</group>
+    				<group>
+    					<group>
+    					    <!--+++ HoangTK - 11/17/2015: Add mo_id to view and remove required of sale_product_ids-->
+    					    <field name="mo_id" required="1" attrs="{'readonly': [('state','!=','draft')]}" on_change="onchange_mo_id_product_id(mo_id,product_id,context)"/>
+		    				<!--<field name="sale_product_ids" widget="many2many_tags" required="1" domain="[('state','in',('confirmed','engineer','manufacture'))]"/> -->
+		    				<field name="sale_product_ids" widget="many2many_tags" readonly="1"/>
+	                        <!--<field name="main_part_id"/> -->
+	                        <field name="product_id"  attrs="{'readonly': [('state','!=','draft')]}" on_change="onchange_mo_id_product_id(mo_id,product_id,context)"/>
+	                        <!--... HoangTK - 11/17/2015 -->
+	                        <field name="bom_file_name" invisible="1"/>
+	                        <field name="bom_file" filename="bom_file_name" attrs="{'readonly': [('state','!=','draft')]}"/>             
+		    				<field name="create_uid"/>
+		    				<field name="create_date"/>
+		    				<field name="id"/>
+		    				<field name="company_id" groups="base.group_multi_company" widget="selection"/>
+    					</group>
+    					<group>
+    					<!--+++ HoangTK - 12/08/2015: Show quantities -->
+    					   <field name="prepare_qty"/>
+    					   <field name="done_qty"/>
+    					   <field name="need_qty"/>
+    					<!--... HoangTK - 12/08/2015: Show quantities -->
+		    				<field name="note"/>
+    					</group>
+    				</group>
+    				<separator string="Drawing Order Lines" colspan="4"/>
+    				<field name="order_lines" nolabel="1" colspan="4">
+    					<tree string="Lines" editable="bottom">
+		                    <field name="product_id"/>
+		                    <!--+++ HoangTK - 11/25/2015: Add bom_qty -->
+		                    <field name="part_type"/>
+		                    <field name="bom_qty"/>
+		                    <!--... HoangTK - 11/25/2015 -->
+		                    <field name="drawing_file_name" invisible="1"/>
+		                    <!--+++ HoangTK 11/18/2015: Hide drawing_file when no drawing_file_name -->
+		                    <!--<field name="drawing_file" filename="drawing_file_name"/> -->
+		                    <field name="drawing_file" widget="drawing_url" filename="drawing_file_name" attrs="{'invisible':[('drawing_file_name', '==', False)]}"/>
+		                    <field name="work_steps"  class="metro_high_light" readonly="1"/>
+		                    <!--... HoangTK 11/18/2015 -->
+		                    <!--+++ HoangTK 11/17/2015: Remove step_ids add work_steps -->
+		                    <!--<field name="step_ids" widget="many2many_tags"/> -->
+                            <field name="P_prepare_qty" class="metro_high_light" attrs="{'invisible':[('P_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="P_done_qty" class="metro_high_light" attrs="{'invisible':[('P_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="P_need_qty" class="metro_high_light" attrs="{'invisible':[('P_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Fc_prepare_qty" attrs="{'invisible':[('Fc_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Fc_done_qty" attrs="{'invisible':[('Fc_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Fc_need_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="B_prepare_qty" class="metro_high_light" attrs="{'invisible':[('B_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="B_done_qty" class="metro_high_light" attrs="{'invisible':[('B_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="B_need_qty" class="metro_high_light" attrs="{'invisible':[('B_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ma_prepare_qty" attrs="{'invisible':[('Ma_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ma_done_qty" attrs="{'invisible':[('Ma_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ma_need_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="D_prepare_qty" class="metro_high_light" attrs="{'invisible':[('D_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="D_done_qty" class="metro_high_light" attrs="{'invisible':[('D_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="D_need_qty" class="metro_high_light" attrs="{'invisible':[('D_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Mi_prepare_qty" attrs="{'invisible':[('Mi_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Mi_done_qty" attrs="{'invisible':[('Mi_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Mi_need_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="W_prepare_qty" class="metro_high_light" attrs="{'invisible':[('W_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="W_done_qty" class="metro_high_light" attrs="{'invisible':[('W_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="W_need_qty" class="metro_high_light" attrs="{'invisible':[('W_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="A_prepare_qty" attrs="{'invisible':[('A_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="A_done_qty" attrs="{'invisible':[('A_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="A_need_qty" attrs="{'invisible':[('A_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ct_prepare_qty" class="metro_high_light" attrs="{'invisible':[('Ct_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ct_done_qty" class="metro_high_light" attrs="{'invisible':[('Ct_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ct_need_qty" class="metro_high_light" attrs="{'invisible':[('Ct_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Bt_prepare_qty" attrs="{'invisible':[('Bt_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Bt_done_qty" attrs="{'invisible':[('Bt_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Bt_need_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ps_prepare_qty" class="metro_high_light" attrs="{'invisible':[('Ps_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ps_done_qty" class="metro_high_light" attrs="{'invisible':[('Ps_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="Ps_need_qty" class="metro_high_light" attrs="{'invisible':[('Ps_need_qty', '==', 0)]}" readonly="1"/>
+                            <field name="G_prepare_qty" attrs="{'invisible':[('G_prepare_qty', '==', 0)]}" readonly="1"/>
+                            <field name="G_done_qty" attrs="{'invisible':[('G_done_qty', '==', 0)]}" readonly="1"/>
+                            <field name="G_need_qty" attrs="{'invisible':[('G_need_qty', '==', 0)]}" readonly="1"/>
+                             
+                            <field name="status" readonly="1"/>		                    
+		                    <!--... HoangTK 11/17/2015 -->
+	                    </tree>
+	                    <form string="Lines" version="7.0">
+                        	<group>		       		       
+			                    <field name="product_id"/>
+			                    <field name="part_type"/>
+			                    <field name="drawing_file_name" invisible="1"/> 
+		                        <field name="drawing_file" filename="drawing_file_name"/>
+		                        <field name="work_steps"/>
+                                <!--+++ HoangTK 11/17/2015: Remove step_ids add work_steps -->
+                                <!--<field name="step_ids" widget="many2many_tags"/> -->
+                                <field name="P_prepare_qty"/>
+                                <field name="P_done_qty"/>
+                                <field name="P_need_qty"/>
+                                <field name="Fc_prepare_qty"/>
+                                <field name="Fc_done_qty"/>
+                                <field name="Fc_need_qty"/>
+                                <field name="B_prepare_qty"/>
+                                <field name="B_done_qty"/>
+                                <field name="B_need_qty"/>
+                                <field name="Ma_prepare_qty"/>
+                                <field name="Ma_done_qty"/>
+                                <field name="Ma_need_qty"/>
+                                <field name="D_prepare_qty"/>
+                                <field name="D_done_qty"/>
+                                <field name="D_need_qty"/>
+                                <field name="Mi_prepare_qty"/>
+                                <field name="Mi_done_qty"/>
+                                <field name="Mi_need_qty"/>
+                                <field name="W_prepare_qty"/>
+                                <field name="W_done_qty"/>
+                                <field name="W_need_qty"/>
+                                <field name="A_prepare_qty"/>
+                                <field name="A_done_qty"/>
+                                <field name="A_need_qty"/>
+                                <field name="Ct_prepare_qty"/>
+                                <field name="Ct_done_qty"/>
+                                <field name="Ct_need_qty"/>
+                                <field name="Bt_prepare_qty"/>
+                                <field name="Bt_done_qty"/>
+                                <field name="Bt_need_qty"/>
+                                <field name="Ps_prepare_qty"/>
+                                <field name="Ps_done_qty"/>
+                                <field name="Ps_need_qty"/>
+                                <field name="G_prepare_qty"/>
+                                <field name="G_done_qty"/>
+                                <field name="G_need_qty"/>
+                                                                
+                                <!--... HoangTK 11/17/2015 -->
+                            </group>
+	                    </form>    					
+    				</field>
+    			<!-- </sheet> -->
+	            <div class="oe_chatter">
+	              <field name="message_follower_ids" widget="mail_followers"/>
+	              <field name="message_ids" widget="mail_thread"/>
+	            </div>     			
+    		</form>
+    	</field>
+    </record>
+    <record model="ir.ui.view" id="view_drawing_order_tree">
+    	<field name="name">view_drawing_order_tree</field>
+    	<field name="model">drawing.order</field>
+    	<field name="arch" type="xml">
+            <tree fonts="bold:state == 'approved'" colors="blue:state == 'confirmed';green:state == 'approved';grey:state == 'cancel';" string="Drawing Orders">
+                <field name="message_unread" invisible="1"/>
+		    	<!--+++ HoangTK - 11/17/2015: Remove sale_product_ids,id, show mo_id,product_id instead -->
+		    	<field name="id"/>
+                <field name="name"/>
+                <!--<field name="sale_product_ids" widget="many2many_tags"/> -->
+                <field name="mo_id"/>
+                <!--<field name="main_part_id"/> -->
+                <field name="product_id"/>
+                <!--... HoangTK - 11/17/2015 -->
+                <field name="create_uid"/>
+                <field name="create_date"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="state"/>
+            </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="view_drawing_order_filter">
+            <field name="name">view_drawing_order_filter</field>
+            <field name="model">drawing.order</field>
+            <field name="arch" type="xml">
+                <search string="Search Drawing Orders">
+                    <field name="id"/>
+                    <field name="name" string="Drawing Orders"/>
+                    <field name="mo_id"/>
+                    <field name="sale_product_ids"/>
+                    <field name="product_id"/>
+                    <!--<field name="main_part_id"/>-->
+                    <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                    <filter icon="terp-document-new" name="draft" string="Ready" domain="[('state','=','ready')]"/>
+                    <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]"/>
+                    <filter icon="terp-camera_test" name="approved" string="Approved" domain="[('state','=','approved')]"/>
+                    <filter icon="terp-camera_test" name="rejected" string="Rejected" domain="[('state','=','rejected')]"/>
+                    <separator/>
+                    <filter icon="terp-personal-" string="Cancelled"  domain="[('state','=', 'cancel')]" help="Canceled"/>
+                    <field name="create_uid" />
+                </search>
+            </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="action_drawing_order">
+        <field name="name">Drawing Orders</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">drawing.order</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_drawing_order_filter"/>
+    </record>
+
+    <menuitem
+        id="menu_drawing_order"
+        sequence="102"
+        parent="mrp.menu_mrp_manufacturing"
+        action="action_drawing_order"
+        groups="mrp.group_mrp_user"/>
+        
+<!-- Drawing order lines to list files -->        
+    <record model="ir.ui.view" id="view_drawing_order_line_form">
+    	<field name="name">view_drawing_order_line_form</field>
+    	<field name="model">drawing.order.line</field>
+    	<field name="arch" type="xml">
+    		<form string="Drawing Order Lines" version="7.0" create="false" edit="false" delete="false">
+                <group col="4">
+    		    	<field name="order_id"/>
+    		    	<!--+++ HoangTK - 11/18/2015: Remove sale_product_ids,main_part_id,company_id, replace step_ids with work_steps -->
+    		    	<!-- <field name="sale_product_ids" widget="many2many_tags"/> -->
+    		    	<!-- <field name="main_part_id"/> -->
+    		    	<field name="product_id"/>
+    		    	<field name="drawing_file_name" invisible="1"/>
+    		    	<field name="drawing_file" filename="drawing_file_name"/>		    	
+    		    	<!-- <field name="step_ids"/> -->
+    		    	<field name="work_steps"/>
+    		    	<group colspan="4" col="72">
+    		    	    <label string="P P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="P D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="P N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Fc P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Fc D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Fc N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="B P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="B D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="B N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ma P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ma D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ma N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="D P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="D D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="D N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Mi P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Mi D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Mi N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="W P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="W D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="W N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="A P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="A D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="A N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ct P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ct D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ct N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Bt P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Bt D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Bt N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ps P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ps D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="Ps N.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="G P.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="G D.Qty" colspan="2" class="metro_header_label"/>
+                        <label string="G N.Qty" colspan="2" class="metro_header_label_last"/>                                                                                                			    	    
+                        <field name="P_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="P_done_qty" nolabel="1" colspan="2"/>
+                        <field name="P_need_qty" nolabel="1" colspan="2"/>
+                        <field name="Fc_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="Fc_done_qty" nolabel="1" colspan="2"/>
+                        <field name="Fc_need_qty" nolabel="1" colspan="2"/>
+                        <field name="B_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="B_done_qty" nolabel="1" colspan="2"/>
+                        <field name="B_need_qty" nolabel="1" colspan="2"/>
+                        <field name="Ma_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="Ma_done_qty" nolabel="1" colspan="2"/>
+                        <field name="Ma_need_qty" nolabel="1" colspan="2"/>
+                        <field name="D_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="D_done_qty" nolabel="1" colspan="2"/>
+                        <field name="D_need_qty" nolabel="1" colspan="2"/>
+                        <field name="Mi_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="Mi_done_qty" nolabel="1" colspan="2"/>
+                        <field name="Mi_need_qty" nolabel="1" colspan="2"/>
+                        <field name="W_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="W_done_qty" nolabel="1" colspan="2"/>
+                        <field name="W_need_qty" nolabel="1" colspan="2"/>
+                        <field name="A_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="A_done_qty" nolabel="1" colspan="2"/>
+                        <field name="A_need_qty" nolabel="1" colspan="2"/>
+                        <field name="Ct_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="Ct_done_qty" nolabel="1" colspan="2"/>
+                        <field name="Ct_need_qty" nolabel="1" colspan="2"/>
+                        <field name="Bt_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="Bt_done_qty" nolabel="1" colspan="2"/>
+                        <field name="Bt_need_qty" nolabel="1" colspan="2"/>
+                        <field name="Ps_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="Ps_done_qty" nolabel="1" colspan="2"/>
+                        <field name="Ps_need_qty" nolabel="1" colspan="2"/>
+                        <field name="G_prepare_qty" nolabel="1" colspan="2"/>
+                        <field name="G_done_qty" nolabel="1" colspan="2"/>
+                        <field name="G_need_qty" nolabel="1" colspan="2"/>
+                    </group>			    	
+    		    	<field name="state"/>
+                    <field name="create_uid"/>
+                    <field name="create_date"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <!--... HoangTK - 11/18/2015 -->
+                </group>
+    		</form>
+    	</field>
+    </record>
+    <record model="ir.ui.view" id="view_drawing_order_line_list">
+    	<field name="name">view_drawing_order_line_list</field>
+    	<field name="model">drawing.order.line</field>
+    	<field name="arch" type="xml">
+            <tree string="Drawing Order Lines" create="false" edit="false" delete="false">
+		    	<field name="order_id"/>
+		    	<!--+++ HoangTK - 11/18/2015: Remove sale_product_ids,main_part_id,company_id, replace step_ids with work_steps -->
+		    	<!--<field name="sale_product_ids" widget="many2many_tags"/> -->
+		    	<!--<field name="main_part_id"/> -->
+		    	<field name="product_id"/>
+			    <field name="drawing_file_name" invisible="1"/>
+		    	<field name="drawing_file" filename="drawing_file_name" widget="drawing_url"/>		    	
+		    	<!--<field name="step_ids"/> -->
+		    	<field name="work_steps"/>		    	
+		    	<field name="state"/>
+                <field name="create_uid"/>
+                <field name="create_date"/>
+                <!--<field name="company_id" groups="base.group_multi_company"/> -->
+                <!--... HoangTK - 11/18/2015 -->
+            </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="view_drawing_order_line_filter">
+            <field name="name">view_drawing_order_line_filter</field>
+            <field name="model">drawing.order.line</field>
+            <field name="arch" type="xml">
+                <search string="Search Drawing Order Lines">
+                    <field name="order_id" string="Drawing Orders" filter_domain="[('order_id.name','ilike',self)]"/>
+                    <field name="sale_product_ids"/>
+		    		<field name="step_ids"/>
+                    <field name="main_part_id"/>
+                    <field name="product_id"/>  
+                    <field name="drawing_file_name"/>	
+                    <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                    <filter icon="terp-document-new" name="draft" string="Ready" domain="[('state','=','ready')]"/>
+                    <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]"/>
+                    <filter icon="terp-camera_test" name="approved" string="Approved" domain="[('state','=','approved')]"/>
+                    <filter icon="terp-camera_test" name="rejected" string="Rejected" domain="[('state','=','rejected')]"/>
+                    <separator/>
+                    <filter icon="terp-personal-" string="Cancelled"  domain="[('state','=', 'cancel')]" help="Canceled"/>
+                    <field name="create_uid" />
+                </search>
+            </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="action_drawing_order_line">
+        <field name="name">Drawing Order Files</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">drawing.order.line</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_drawing_order_line_filter"/>
+    </record>
+
+    <menuitem
+        id="menu_drawing_order_file"
+        sequence="103"
+        parent="mrp.menu_mrp_manufacturing"
+        action="action_drawing_order_line"
+        groups="mrp.group_mrp_user"/>           
+    
+<!-- Add 'Print PDF' to drawing order list page -->
+        <record id="action_server_drawing_order_print" model="ir.actions.server">
+            <field name="name">Print PDF</field>
+            <field name="condition">True</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_drawing_order" />
+            <field name="state">code</field>
+            <!-- the 'action' will be get actions_servre.run() to return to calling client -->
+            <field name="code">action=self.print_pdf(cr, uid, context.get('active_ids', []), context=context)</field>
+        </record>
+
+        <record model="ir.values" id="action_drawing_order_print">
+            <field name="name">action_drawing_order_print</field>
+            <field name="action_id" ref="action_server_drawing_order_print" />
+            <field name="value" eval="'ir.actions.server,' + str(ref('action_server_drawing_order_print'))" />
+            <field name="key">action</field>
+            <field name="model_id" ref="model_drawing_order" />
+            <field name="model">drawing.order</field>
+            <field name="key2">client_action_multi</field>
+        </record>     
+        
+<!-- Add 'Print PDF' to drawing order line list page -->
+        <record id="action_server_drawing_order_line_print" model="ir.actions.server">
+            <field name="name">Print PDF</field>
+            <field name="condition">True</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_drawing_order_line" />
+            <field name="state">code</field>
+            <!-- the 'action' will be get actions_servre.run() to return to calling client -->
+            <field name="code">action=self.print_pdf(cr, uid, context.get('active_ids', []), context=context)</field>
+        </record>
+
+        <record model="ir.values" id="action_drawing_order_line_print">
+            <field name="name">action_drawing_order_line_print</field>
+            <field name="action_id" ref="action_server_drawing_order_line_print" />
+            <field name="value" eval="'ir.actions.server,' + str(ref('action_server_drawing_order_line_print'))" />
+            <field name="key">action</field>
+            <field name="model_id" ref="model_drawing_order_line" />
+            <field name="model">drawing.order.line</field>
+            <field name="key2">client_action_multi</field>
+        </record> 
+        
+    </data>
+</openerp>

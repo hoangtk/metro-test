@@ -1,0 +1,9 @@
+@charset "utf-8";
+
+.openerp .oe_list.oe_cannot_delete .oe_list_record_delete_multi {
+  display: none !important;
+}
+
+.openerp .oe_list.oe_cannot_create .oe_list_record_copy {
+  display: none !important;
+}

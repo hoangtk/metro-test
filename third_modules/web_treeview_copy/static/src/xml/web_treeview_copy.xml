@@ -1,0 +1,14 @@
+<template>
+
+<t t-extend="ListView.row">
+    <t t-jquery="td.oe_list_record_delete" t-operation="after">
+	    <td t-if="options.deletable" class='oe_list_record_copy' width="13px">
+	        <button type="button" name="copy" class="oe_i">l</button>
+	    </td>
+	    <td t-if="options.deletable" class='oe_list_record_delete_multi' width="13px">
+        	<button type="button" name="delete_multi" class="oe_i">e</button>
+	    </td>
+    </t>
+</t>
+
+</template>

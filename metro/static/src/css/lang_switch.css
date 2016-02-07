@@ -1,0 +1,28 @@
+
+.openerp .oe_lang_switch {
+	margin-top: 3px;
+    height: 24px;
+    width: 24px;
+    display: inline-block;
+}
+.openerp .oe_lang_switch_cn {
+    float:left;
+    height: 24px;
+    width: 24px;
+    background: url(/metro/static/src/img/cn.png);
+    cursor: pointer;
+}
+.openerp .oe_lang_switch.oe_lang_cn .oe_lang_switch_cn {
+    display: none;
+}
+
+.openerp .oe_lang_switch_en {
+    float:right;
+    height: 24px;
+    width: 24px;
+    background: url(/metro/static/src/img/en.png);
+    cursor: pointer;
+}
+.openerp .oe_lang_switch.oe_lang_en .oe_lang_switch_en {
+    display: none;
+}

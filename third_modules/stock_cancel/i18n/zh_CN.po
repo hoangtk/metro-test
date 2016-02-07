@@ -1,0 +1,37 @@
+# Translation of OpenERP Server.
+# This file contains the translation of the following modules:
+# 	* stock_cancel
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenERP Server 6.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-03-02 14:12+0000\n"
+"PO-Revision-Date: 2014-05-19 16:36+0800\n"
+"Last-Translator: Leonardo Pistone <leonardo.pistone@domsense.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: \n"
+"X-Generator: Poedit 1.5.7\n"
+
+#. module: stock_cancel
+#: view:stock.picking:0
+msgid "Are you sure you want to reopen this stock picking?"
+msgstr "确认重置此出入库单吗?"
+
+#. module: stock_cancel
+#: view:stock.picking:0
+msgid "Reopen"
+msgstr "重置"
+
+#. module: stock_cancel
+#: sql_constraint:stock.picking:0
+msgid "Reference must be unique per Company!"
+msgstr "Reference must be unique per Company!"
+
+#. module: stock_cancel
+#: model:ir.model,name:stock_cancel.model_stock_picking
+msgid "Picking List"
+msgstr "Picking List"

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+<t t-extend="ViewPager">
+    <t t-jquery=".oe_pager_group" t-operation="after">
+        <ul class="oe_ul_export_button">
+<!--             <li>
+                <a class="oe_bold oe_list_button_import_pdf"
+                            type="button"
+                            id="button_export_pdf"
+                            href="#">PDF</a>
+            </li> -->
+            <li>
+                <a class="oe_bold oe_list_button_import_excel"
+                            type="button"
+                            id="button_export_excel"
+                            href="#">Excel</a>
+            </li>
+        </ul>
+    </t>
+</t>
+<t t-extend="TreeView">
+    <t t-jquery=".oe_tree_table" t-operation="before">
+        <ul class="oe_ul_export_button">
+<!--             <li>
+                <a class="oe_bold oe_list_button_import_pdf"
+                            type="button"
+                            id="button_export_pdf"
+                            href="#">PDF</a>
+            </li> -->
+            <li>
+                <a class="oe_bold oe_list_button_import_excel"
+                            type="button"
+                            id="button_export_excel"
+                            href="#">Excel</a>
+            </li>
+        </ul>
+    </t>
+</t>
+</templates>

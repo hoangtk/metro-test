@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_drawing_order,drawing.order,model_drawing_order,mrp.group_mrp_user,1,1,1,1
+access_drawing_order_line,drawing.order.line,model_drawing_order_line,mrp.group_mrp_user,1,1,1,1
+access_drawing_step,drawing.step,model_drawing_step,mrp.group_mrp_user,1,1,1,1

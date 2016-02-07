@@ -1,0 +1,13 @@
+<template>
+    <t t-name="LangSwitcher">
+        <div class="oe_lang_switch oe_lang_cn" data-tipsy="true">
+             <div class="oe_lang_switch_cn"></div>
+             <div class="oe_lang_switch_en"></div>
+        </div>
+    </t>
+</template>
+
+
+
+
+
