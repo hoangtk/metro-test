@@ -71,7 +71,7 @@ class upload_multi_drawings(osv.osv_memory):
                 file_ext = file_parts[1]
             new_file_name = file_name + "-" + mfg_name
             if file_ext:
-                new_file_name = new_file_name + "." + file_ext                
+                new_file_name = new_file_name + "." + file_ext 
             product_ids = product_obj.search(cr, uid, [
                                                        ('name','=',file_name),
                                                        ])
@@ -94,8 +94,10 @@ class upload_multi_drawings(osv.osv_memory):
                 drawing_line_obj.write(cr, uid, new_id, {
                                                            'drawing_file_name' : new_file_name,
                                                            })
-            else:
-                new_id = drawing_line_obj.create(cr, uid, drawing_line_val, context=context)
+            #+++ HoangTK - 02/08/2016 : Not create order line anymore
+            #else:
+            #    new_id = drawing_line_obj.create(cr, uid, drawing_line_val, context=context)
+            #--- HoangTK - 02/08/2016 : Not create order line anymore
             #--- HoangTK - 11/19/2015
             #+++ HoangTK - 11/19/2015: Update attachment with new id and name
             #attachment_obj.write(cr, uid, attachment.id, {'res_id':new_id, 'res_model':'drawing.order.line', 'name':'drawing_file'})

@@ -22,7 +22,7 @@
                                     <field name="done_qty"/>
                                     <field name="need_qty"/>
                                     <field name="state"/>
-                                    <button name="generate_tasks" string="Generate Tasks" type="object" class="oe_highlight" icon="gtk-media-play"/>
+                                    <button name="generate_tasks" confirm="Old tasks will be deleted. Are you sure you want to continue ?" string="Generate Tasks" type="object" class="oe_highlight" icon="gtk-media-play"/>
                                     
                                 </tree>
                                 <form string="Drawing Order" version="7.0">
@@ -43,7 +43,7 @@
                                         <button string="Upload Part Drawings" name="%(action_upload_multi_drawings)d" type="action" states="draft,rejected" class="oe_inline" />
                                         <button name="print_pdf" string="Print PDF" type="object" class="oe_inline" />
                                         
-                                        <field name="state" widget="statusbar" statusbar_visible="draft,ready,confirmed,approved"/>                 
+                                        <field name="state" widget="statusbar" readonly="1"/>                 
                                     </header>                                
                                     <group col="4">
                                         <field name="name"/>

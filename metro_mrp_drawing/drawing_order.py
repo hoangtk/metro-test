@@ -13,7 +13,6 @@ import os
 from openerp import SUPERUSER_ID
 import xlrd
 import StringIO
-from test.test_threaded_import import task
 try:
     import json
 except ImportError:
@@ -191,7 +190,9 @@ class drawing_order(osv.osv):
         return super(drawing_order, self).copy(cr, uid, id, default, context)    
     #+++ HoangTK - 11/17/2015: Add update_parts function
     def _split_work_steps(self, work_steps):
-        steps = work_steps.split(' ')
+        steps = []
+        if work_steps:
+            steps = work_steps.split(' ')
         return steps
     def generate_tasks(self, cr, uid, ids, context):
         workcenter_line_obj = self.pool.get('mrp.production.workcenter.line')
@@ -199,36 +200,37 @@ class drawing_order(osv.osv):
         project_task_obj = self.pool.get('project.task')
         project_task_line_obj = self.pool.get('project.task.line')
         dept_obj = self.pool.get('hr.department')
+        drawing_order_obj = self.pool.get('drawing.order')
         project_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'metro_project', 'project_mfg')[1]
         for drawing_order in self.browse(cr, uid, ids):
             #Check if work order exists ? if not create it
             product = drawing_order.product_id
             mo = drawing_order.mo_id
             wo_line_ids = workcenter_line_obj.search(cr, uid, [
-                                                               ('production_id','=',product.id),
-                                                               ('big_subassembly_id','=',mo.id)
+                                                               ('production_id','=',mo.id),
+                                                               ('big_subassembly_id','=',product.id)
                                                                ]) 
             if not wo_line_ids:
-                production_obj.action_compute_an_assembly(cr, uid, [mo.id],product.id)
+                production_obj.action_compute_an_assembly(cr, uid, [mo.id],assembly_id = product.id)
             wo_line_ids = workcenter_line_obj.search(cr, uid, [
-                                                               ('production_id','=',product.id),
-                                                               ('big_subassembly_id','=',mo.id)
+                                                               ('production_id','=',mo.id),
+                                                               ('big_subassembly_id','=',product.id)
                                                                ]) 
             if not wo_line_ids:
                 raise osv.except_osv(_('Error!'), _('Can not create work order for assembly %s !') % (product.name,))
             if len(wo_line_ids) != 1:
-                raise osv.except_osv(_('Error!'), _('There are more thang 2 work orders for assembly %s !') % (product.name,))
+                raise osv.except_osv(_('Error!'), _('There are more than 2 work orders for assembly %s !') % (product.name,))
             wo = workcenter_line_obj.browse(cr, uid, wo_line_ids)[0]
-            if wo.state not in  ['draft','cancel']:
-                raise osv.except_osv(_('Error!'), _('Can not generate tasks for work order not in draft or cancel state !'))
+            if wo.state != 'draft':
+                raise osv.except_osv(_('Error!'), _('Can not generate tasks for work order not in draft state !'))
             #Remove all current tasks
             old_task_ids = project_task_obj.search(cr, uid, [('workorder_id','=',wo.id)])
-            project_task_line_obj.unlink(cr, uid, old_task_ids)
+            project_task_obj.unlink(cr, uid, old_task_ids)
             #Create all new tasks
             all_drawing_steps = []    
             all_steps = {}        
             for order_line in drawing_order.order_lines:
-                steps = drawing_order._split_work_steps(order_line.work_steps)
+                steps = drawing_order_obj._split_work_steps(order_line.work_steps)
                 for step in steps:
                     if not step in all_steps:
                         all_drawing_steps.append(step)
@@ -352,7 +354,7 @@ class drawing_order(osv.osv):
                                                })
                         prepare_qty += order_line.G_prepare_qty
                         need_qty += order_line.G_need_qty    
-                    steps = drawing_order._split_work_steps(order_line.work_steps)
+                    steps = drawing_order_obj._split_work_steps(order_line.work_steps)
                     next_step = ""
                     if task_id.dept_code != order_line.last_step:
                         for index, step in enumerate(steps):
@@ -412,7 +414,7 @@ class drawing_order(osv.osv):
                     row = 2
                     while row < worksheet.nrows:
                         #Read part name
-                        part_name = worksheet.cell(row,1).value.strip().replace('\n', ' ').replace('\r', '')
+                        part_name = worksheet.cell(row,1).value.strip(' \t').replace('\n', ' ').replace('\r', '')
                         if part_name:
                             #Check if this part is exits
                             product_ids = product_obj.search(cr, uid, [

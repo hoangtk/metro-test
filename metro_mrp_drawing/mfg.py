@@ -10,7 +10,10 @@ from openerp.addons.metro import utils
 from datetime import datetime
 from openerp import tools
 from openerp import tools, SUPERUSER_ID
-from openerp.addons.product import _common
+def ceiling(f, r):
+    if not r:
+        return f
+    return tools.float_round(f, precision_rounding=r, rounding_method='UP')
 class project_task_line(osv.osv):
     _name = "project.task.line"
     _columns = {
@@ -44,88 +47,65 @@ def rounding(f, r):
 class mrp_bom(osv.osv):
     _name = 'mrp.bom'
     _inherit = 'mrp.bom'
-    def _bom_explode_an_assembly(self, cr, uid, bom, product, factor, properties=None, level=0, routing_id=False, previous_products=None, master_bom=None, context=None,assembly_id = False):
+    def _bom_explode_an_assembly(self, cr, uid, bom, factor, properties=None, addthis=False, level=0, routing_id=False,assembly_id = False):
         """ Finds Products and Work Centers for related BoM for manufacturing order.
-        @param bom: BoM of particular product template.
-        @param product: Select a particular variant of the BoM. If False use BoM without variants.
-        @param factor: Factor represents the quantity, but in UoM of the BoM, taking into account the numbers produced by the BoM
+        @param bom: BoM of particular product.
+        @param factor: Factor of product UoM.
         @param properties: A List of properties Ids.
+        @param addthis: If BoM found then True else False.
         @param level: Depth level to find BoM lines starts from 10.
-        @param previous_products: List of product previously use by bom explore to avoid recursion
-        @param master_bom: When recursion, used to display the name of the master bom
         @return: result: List of dictionaries containing product details.
                  result2: List of dictionaries containing Work Center details.
         """
-        uom_obj = self.pool.get("product.uom")
         routing_obj = self.pool.get('mrp.routing')
-        master_bom = master_bom or bom
-
-
-        def _factor(factor, product_efficiency, product_rounding):
-            factor = factor / (product_efficiency or 1.0)
-            factor = _common.ceiling(factor, product_rounding)
-            if factor < product_rounding:
-                factor = product_rounding
-            return factor
-
-        factor = _factor(factor, bom.product_efficiency, bom.product_rounding)
-
+        factor = factor / (bom.product_efficiency or 1.0)
+        factor = rounding(factor, bom.product_rounding)
+        if factor < bom.product_rounding:
+            factor = bom.product_rounding
         result = []
         result2 = []
+        phantom = False
+        if bom.type == 'phantom' and not bom.bom_lines:
+            newbom = self._bom_find(cr, uid, bom.product_id.id, bom.product_uom.id, properties)
 
-        routing = (routing_id and routing_obj.browse(cr, uid, routing_id)) or bom.routing_id or False
-        if routing:
-            for wc_use in routing.workcenter_lines:
-                wc = wc_use.workcenter_id
-                d, m = divmod(factor, wc_use.workcenter_id.capacity_per_cycle)
-                mult = (d + (m and 1.0 or 0.0))
-                cycle = mult * wc_use.cycle_nbr
-                result2.append({
-                    'name': tools.ustr(wc_use.name) + ' - ' + tools.ustr(bom.product_tmpl_id.name_get()[0][1]),
-                    'workcenter_id': wc.id,
-                    'sequence': level + (wc_use.sequence or 0),
-                    'cycle': cycle,
-                    'hour': float(wc_use.hour_nbr * mult + ((wc.time_start or 0.0) + (wc.time_stop or 0.0) + cycle * (wc.time_cycle or 0.0)) * (wc.time_efficiency or 1.0)),
+            if newbom:
+                res = self._bom_explode(cr, uid, self.browse(cr, uid, [newbom])[0], factor*bom.product_qty, properties, addthis=True, level=level+10)
+                result = result + res[0]
+                result2 = result2 + res[1]
+                phantom = True
+            else:
+                phantom = False
+        if not phantom:
+            if addthis and not bom.bom_lines:
+                result.append(
+                {
+                    'name': bom.product_id.name,
+                    'product_id': bom.product_id.id,
+                    'product_qty': bom.product_qty * factor,
+                    'product_uom': bom.product_uom.id,
+                    'product_uos_qty': bom.product_uos and bom.product_uos_qty * factor or False,
+                    'product_uos': bom.product_uos and bom.product_uos.id or False,
                 })
-
-        for bom_line_id in bom.bom_line_ids:
-            if bom_line_id == assembly_id:
-                if self._skip_bom_line(cr, uid, bom_line_id, product, context=context):
-                    continue
-                if set(map(int, bom_line_id.property_ids or [])) - set(properties or []):
-                    continue
-    
-                if previous_products and bom_line_id.product_id.product_tmpl_id.id in previous_products:
-                    raise osv.except_osv(_('Invalid Action!'), _('BoM "%s" contains a BoM line with a product recursion: "%s".') % (master_bom.name,bom_line_id.product_id.name_get()[0][1]))
-    
-                quantity = _factor(bom_line_id.product_qty * factor, bom_line_id.product_efficiency, bom_line_id.product_rounding)
-                bom_id = self._bom_find(cr, uid, product_id=bom_line_id.product_id.id, properties=properties, context=context)
-    
-                #If BoM should not behave like PhantoM, just add the product, otherwise explode further
-                if bom_line_id.type != "phantom" and (not bom_id or self.browse(cr, uid, bom_id, context=context).type != "phantom"):
-                    result.append({
-                        'name': bom_line_id.product_id.name,
-                        'product_id': bom_line_id.product_id.id,
-                        'product_qty': quantity,
-                        'product_uom': bom_line_id.product_uom.id,
-                        'product_uos_qty': bom_line_id.product_uos and _factor(bom_line_id.product_uos_qty * factor, bom_line_id.product_efficiency, bom_line_id.product_rounding) or False,
-                        'product_uos': bom_line_id.product_uos and bom_line_id.product_uos.id or False,
+            routing = (routing_id and routing_obj.browse(cr, uid, routing_id)) or bom.routing_id or False
+            if routing:
+                for wc_use in routing.workcenter_lines:
+                    wc = wc_use.workcenter_id
+                    d, m = divmod(factor, wc_use.workcenter_id.capacity_per_cycle)
+                    mult = (d + (m and 1.0 or 0.0))
+                    cycle = mult * wc_use.cycle_nbr
+                    result2.append({
+                        'name': tools.ustr(wc_use.name) + ' - '  + tools.ustr(bom.product_id.name),
+                        'workcenter_id': wc.id,
+                        'sequence': level+(wc_use.sequence or 0),
+                        'cycle': cycle,
+                        'hour': float(wc_use.hour_nbr*mult + ((wc.time_start or 0.0)+(wc.time_stop or 0.0)+cycle*(wc.time_cycle or 0.0)) * (wc.time_efficiency or 1.0)),
                     })
-                elif bom_id:
-                    all_prod = [bom.product_tmpl_id.id] + (previous_products or [])
-                    bom2 = self.browse(cr, uid, bom_id, context=context)
-                    # We need to convert to units/UoM of chosen BoM
-                    factor2 = uom_obj._compute_qty(cr, uid, bom_line_id.product_uom.id, quantity, bom2.product_uom.id)
-                    quantity2 = factor2 / bom2.product_qty
-                    res = self._bom_explode(cr, uid, bom2, bom_line_id.product_id, quantity2,
-                        properties=properties, level=level + 10, previous_products=all_prod, master_bom=master_bom, context=context)
+            for bom2 in bom.bom_lines:
+                if bom2.product_id.id == assembly_id:
+                    res = self._bom_explode(cr, uid, bom2, factor, properties, addthis=True, level=level+10)
                     result = result + res[0]
                     result2 = result2 + res[1]
-                else:
-                    raise osv.except_osv(_('Invalid Action!'), _('BoM "%s" contains a phantom BoM line but the product "%s" does not have any BoM defined.') % (master_bom.name,bom_line_id.product_id.name_get()[0][1]))
-
         return result, result2
-    
 mrp_bom()
 class mrp_production(osv.osv):
     _inherit = 'mrp.production'
@@ -152,54 +132,44 @@ class mrp_production(osv.osv):
                                         'bom_file_name': False}
                 drawing_order_obj.create(cr, uid, drawing_order_vals)
         return True
-    def _prepare_lines_an_assembly(self, cr, uid, production, assembly_id):
-        # search BoM structure and route
+    def action_compute_an_assembly(self, cr, uid, ids, properties=None, context=None, assembly_id=False):
+        """ Computes bills of material of a product.
+        @param properties: List containing dictionaries of properties.
+        @return: No. of products.
+        """
+        if properties is None:
+            properties = []
+        results = []
         bom_obj = self.pool.get('mrp.bom')
         uom_obj = self.pool.get('product.uom')
-        bom_point = production.bom_id
-        bom_id = production.bom_id.id
-        if not bom_point:
-            bom_id = bom_obj._bom_find(cr, uid, product_id=production.product_id.id)
-            if bom_id:
-                bom_point = bom_obj.browse(cr, uid, bom_id)
-                routing_id = bom_point.routing_id.id or False
-                self.write(cr, uid, [production.id], {'bom_id': bom_id, 'routing_id': routing_id})
-
-        if not bom_id:
-            raise osv.except_osv(_('Error!'), _("Cannot find a bill of material for this product."))
-
-        # get components and workcenter_lines from BoM structure
-        factor = uom_obj._compute_qty(cr, uid, production.product_uom.id, production.product_qty, bom_point.product_uom.id)
-        # product_lines, workcenter_lines
-        return bom_obj._bom_explode_an_assembly(cr, uid, bom_point, production.product_id, factor / bom_point.product_qty, routing_id=production.routing_id.id,assembly_id = assembly_id)
-
-    
-    def _action_compute_lines_an_aseembly(self, cr, uid, ids, assembly_id):
-        results = []
         prod_line_obj = self.pool.get('mrp.production.product.line')
         workcenter_line_obj = self.pool.get('mrp.production.workcenter.line')
         for production in self.browse(cr, uid, ids):
-            #unlink product_lines
-            prod_line_obj.unlink(cr, SUPERUSER_ID, [line.id for line in production.product_lines])
-            #unlink workcenter_lines
-            workcenter_line_obj.unlink(cr, SUPERUSER_ID, [line.id for line in production.workcenter_lines])
+            #cr.execute('delete from mrp_production_product_line where production_id=%s', (production.id,))
+            #cr.execute('delete from mrp_production_workcenter_line where production_id=%s', (production.id,))
+            bom_point = production.bom_id
+            bom_id = production.bom_id.id
+            if not bom_point:
+                bom_id = bom_obj._bom_find(cr, uid, production.product_id.id, production.product_uom.id, properties)
+                if bom_id:
+                    bom_point = bom_obj.browse(cr, uid, bom_id)
+                    routing_id = bom_point.routing_id.id or False
+                    self.write(cr, uid, [production.id], {'bom_id': bom_id, 'routing_id': routing_id})
 
-            res = self._prepare_lines_an_assembly(cr, uid, production)
-            results = res[0] # product_lines
-            results2 = res[1] # workcenter_lines
-
-            # reset product_lines in production order
+            if not bom_id:
+                raise osv.except_osv(_('Error!'), _("Cannot find a bill of material for this product."))
+            factor = uom_obj._compute_qty(cr, uid, production.product_uom.id, production.product_qty, bom_point.product_uom.id)
+            res = bom_obj._bom_explode_an_assembly(cr, uid, bom_point, factor / bom_point.product_qty, properties, routing_id=production.routing_id.id,assembly_id = assembly_id)
+            results = res[0]
+            results2 = res[1]
             for line in results:
                 line['production_id'] = production.id
                 prod_line_obj.create(cr, uid, line)
-
-            #reset workcenter_lines in production order
             for line in results2:
                 line['production_id'] = production.id
                 workcenter_line_obj.create(cr, uid, line)
-        return results        
-    def action_compute_an_assembly(self, cr, uid, ids, assembly_id):
-        return len(self._action_compute_lines_an_aseembly(cr, uid, ids, assembly_id))
+        return len(results)
+
     def action_compute(self, cr, uid, ids, properties=None, context=None):
         result = super(mrp_production,self).action_compute(cr, uid, ids, properties, context)
         drawing_order_obj = self.pool.get('drawing.order')
