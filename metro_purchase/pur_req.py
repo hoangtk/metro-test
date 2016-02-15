@@ -77,7 +77,7 @@ class pur_req(osv.osv):
 #        'po_ids' : fields.one2many('purchase.order','req_id','Related PO'),
         #once user did merging PO, then one PO may have multi requestions, so change this field to a function field
         'po_ids' : fields.function(_req_pos, type='one2many',relation='purchase.order',string='Related PO'),              
-        'full_gen_po': fields.function(_full_gen_po, string='All products generated PO', type='boolean', help="It indicates that this requsition's all lines generated PO"),      
+        'full_gen_po': fields.function(_full_gen_po, string='All products generated PO', type='boolean', help="It indicates that this requsition's all lines generated PO"),
     }
     _defaults = {
 #        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'pur.req'),

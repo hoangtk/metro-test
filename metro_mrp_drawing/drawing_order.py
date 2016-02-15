@@ -194,6 +194,20 @@ class drawing_order(osv.osv):
         if work_steps:
             steps = work_steps.split(' ')
         return steps
+    def generate_pr(self, cr, uid, ids, context):
+        mod_obj = self.pool.get('ir.model.data')
+        res = mod_obj.get_object_reference(cr, uid, 'metro_mrp_drawing', 'view_generate_pr_wizard')
+        res_id = res and res[1] or False
+        return{
+            'name':'Purchase Requisition Generator',
+            'res_model':'generate.pr.wizard',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [res_id],
+            'context':{'drawing_order_ids': ids},
+            'target':'new'
+             }
     def generate_tasks(self, cr, uid, ids, context):
         workcenter_line_obj = self.pool.get('mrp.production.workcenter.line')
         production_obj = self.pool.get('mrp.production')
@@ -202,10 +216,10 @@ class drawing_order(osv.osv):
         dept_obj = self.pool.get('hr.department')
         drawing_order_obj = self.pool.get('drawing.order')
         project_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'metro_project', 'project_mfg')[1]
-        for drawing_order in self.browse(cr, uid, ids):
+        for order in self.browse(cr, uid, ids):
             #Check if work order exists ? if not create it
-            product = drawing_order.product_id
-            mo = drawing_order.mo_id
+            product = order.product_id
+            mo = order.mo_id
             wo_line_ids = workcenter_line_obj.search(cr, uid, [
                                                                ('production_id','=',mo.id),
                                                                ('big_subassembly_id','=',product.id)
@@ -229,7 +243,7 @@ class drawing_order(osv.osv):
             #Create all new tasks
             all_drawing_steps = []    
             all_steps = {}        
-            for order_line in drawing_order.order_lines:
+            for order_line in order.order_lines:
                 steps = drawing_order_obj._split_work_steps(order_line.work_steps)
                 for step in steps:
                     if not step in all_steps:
@@ -247,7 +261,7 @@ class drawing_order(osv.osv):
                              'user_id': uid,
                              'dept_id': dept.id,
                              'dept_mgr_id': dept.manager_id.id,
-                             'drawing_order_id': drawing_order.id,
+                             'drawing_order_id': order.id,
                              'project_id': project_id,
                              }
                     project_task_obj.create(cr, uid, task_vals) 

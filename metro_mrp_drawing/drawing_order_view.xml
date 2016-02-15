@@ -26,6 +26,7 @@
     				<group>
     					<h1><field name="name"/></h1>
 	                    <div class="oe_right oe_button_box" name="buttons">
+                                <button name="generate_pr" string="Generate PR" type="object" class="oe_inline" states="confirmed,approved"/>
 	                    		<button name="update_parts" string="Update Parts" type="object" class="oe_inline" states="draft,rejected"/>
 	                    		<button string="Upload Part Drawings" name="%(action_upload_multi_drawings)d" type="action" states="draft,rejected" class="oe_inline" />
 	                    		<button name="print_pdf" string="Print PDF" type="object" class="oe_inline" />

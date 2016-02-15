@@ -24,5 +24,6 @@ import drawing_order
 import upload_multi_drawings
 import wizard
 import report
+import pur_req
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
