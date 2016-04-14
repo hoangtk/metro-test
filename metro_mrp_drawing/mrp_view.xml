@@ -227,7 +227,7 @@
                         <button name="download_pdf" string="Download All PDFs" type="object" class="oe_inline" />
                         <field name="task_lines" nolabel="1" colspan="4" options="{'no_create': True}">
                             <tree string="Task Lines" editable="bottom">
-                                <field name="sequence" readonl="1" string="#"/>
+                                <field name="sequence" readonly="1" string="#"/>
                                 <field name="item_no"/>
                                 <field name="product_id" readonly="1"/>
                                 <field name="drawing_file_name" invisible="1"/>

@@ -36,8 +36,9 @@ class missing_erpno(osv.osv):
     _name = "missing.erpno"
     _description = "Missing ERP No"
     _columns = {
+        'name': fields.related('order_id','name',string='Name',type='char',size=128),
         'order_id': fields.many2one('drawing.order', string='Drawing Order', readonly=True),
-        'lines': fields.one2many('missing.erp.line','missing_id', string='Missing Lines', ondelete="cascade"),
+        'lines': fields.one2many('missing.erpno.line','missing_id', string='Missing Lines', ondelete="cascade"),
     }
 missing_erpno()
 
@@ -45,7 +46,7 @@ class missing_erpno_line(osv.osv):
     _name = "missing.erpno.line"
     _description = "Missing ERP Lines"
     _columns = {
-        'missing_id': fields.many2one('missing.order','Missing ERP No'),
+        'missing_id': fields.many2one('missing.erpno','Missing ERP No'),
         'product_id': fields.many2one('product.product', string='Product'),
         'item_no': fields.char('Item No', readonly=True),
         'name': fields.char('Part Number', size=128, readonly=True),
@@ -62,8 +63,6 @@ class drawing_order_history(osv.osv):
         'content': fields.char('Content', readonly=True),
         'vals': fields.char('Update Values', readonly=True, size=256),
     }
-
-
 drawing_order_history()
 
 
@@ -450,7 +449,7 @@ class drawing_order(osv.osv):
         'part_type': self.get_string_from_xls_cell(worksheet.cell(row, 8).value),
         'bom_qty': worksheet.cell(row, 9).value,
         }
-    def check_bom_file_content(self, cr, uid, order_name, bom_file_name, bom_content, old_bom_content=False):
+    def check_bom_file_content(self, cr, uid, order_name, bom_file_name, bom_content):
         logs = []
         department_obj = self.pool.get('hr.department')
         product_obj = self.pool.get('product.product')
@@ -505,6 +504,7 @@ class drawing_order(osv.osv):
                     if len(row_logs) > 0:
                         logs.append('-------------%s-%s-------------' % (bom_line['item_no'], bom_line['part_name']))
                         logs.extend(row_logs)
+                row += 1
         return logs
     def check_bom_file(self, cr, uid, ids):
         error_logs = {}
@@ -703,18 +703,24 @@ class drawing_order(osv.osv):
     def create_missing_erpno(self, cr, uid, ids, context=None):
         missing_erpno_obj = self.pool.get('missing.erpno')
         missing_erpno_line_obj = self.pool.get('missing.erpno.line')
+        have_missing_erpno = False
         for order in self.browse(cr, uid, ids):
-            missing_id = missing_erpno_obj.create(cr, uid, {'order_id': order.id})
             missing_erpno_parts = self.get_missing_erpno_parts(cr, uid, order.bom_file)
-            for part in missing_erpno_parts:
-                missing_erpno_line_obj.create(cr, uid, {
-                    'missing_id': missing_id,
-                    'item_no': part['item_no'],
-                    'name': part['part_number'],
-                    'description': part['description'],
-                })
-        return True
-
+            if len(missing_erpno_parts) > 0:
+                have_missing_erpno = True
+                missing_id = missing_erpno_obj.create(cr, uid, {'order_id': order.id})
+                for part in missing_erpno_parts:
+                    missing_erpno_line_obj.create(cr, uid, {
+                        'missing_id': missing_id,
+                        'item_no': part['item_no'],
+                        'name': part['part_name'],
+                        'description': part['description'],
+                    })
+        if have_missing_erpno:
+            return self.pool.get('warning').info(cr, uid, title='Information', message=_(
+                "Missing erp no parts are created!"))
+        return self.pool.get('warning').info(cr, uid, title='Information', message=_(
+                "Dont have any missing erp no parts to create!"))
     # --- HoangTK - 12/08/2015: Override write method to update drawing order quantity
     def print_pdf(self, cr, uid, ids, context=None):
         order_line_ids = []
