@@ -164,11 +164,11 @@ class Reports(View):
                 date_end = (datetime.datetime.utcnow() + timedelta(days = 7)).strftime(tools.DEFAULT_SERVER_DATE_FORMAT)
             if date_start and date_end:
                 if action['report_name'] == 'task.group.by_team_full':
-                    file_name = 'DailyReport_%s_%s-%s' % (group_name,date_start, date_end)
+                    file_name = 'DailyReport_%s_%s-%s' % (group_name, date_start, date_end)
                 elif action['report_name'] == 'task.group.by_employee_full':
-                    file_name = 'DailyReport_%s_%s-%s' % (group_name, date_end)
+                    file_name = 'DailyReport_%s_%s-%s' % (group_name, date_start, date_end)
                 elif action['report_name'] == 'task.group.by_assignee_full':
-                    file_name = 'DailyReport_%s_%s-%s' % (group_name, date_end)
+                    file_name = 'DailyReport_%s_%s-%s' % (group_name, date_start, date_end)
                 elif action['report_name'] == 'task.group.by_assignee_brief':
                     file_name = 'TaskList_%s_%s' % (group_name,date_start)
                 elif action['report_name'] == 'task.group.by_employee_brief':

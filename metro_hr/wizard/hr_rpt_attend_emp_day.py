@@ -588,7 +588,12 @@ class hr_rpt_attend_emp_day(osv.osv):
             key_group = '[%s]%s'%(rpt_line.emp_id.emp_code, rpt_line.emp_id.name)
             if not groups.get(key_group):
                 #Add the attendance data
-                cale_id = rpt_line.period_id.calendar_id.id
+                #+++ 02/18/2016 - HoangTK : Fix when period is empty
+                cale_id = False
+                if rpt_line.period_id.calendar_id:
+                #cale_id = rpt_line.period_id.calendar_id.id
+                    cale_id = rpt_line.period_id.calendar_id.id
+                #--- 02/18/2016 - HoangTK : Fix when period is empty
                 worktime_types = cale_wt_types.get(cale_id)
                 if not worktime_types and cale_id:
                     sql = 'select distinct b.id,b.sequence,b.name \

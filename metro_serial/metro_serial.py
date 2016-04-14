@@ -182,7 +182,8 @@ class mttl_serials(osv.osv):
                   ('4_years','4 Years'),
                   ('5_years','5 Years')], 'Duration', help="Duration of the Warranty"),
         'warranty_history':fields.one2many('mttl.warranty.history','serial_id', 'Warranty Claims History'),
-        
+        #+++ HoangTK - 02/18/2016 : Link warranty module to serials
+        'warranty_ids': fields.one2many('warranty.cases','serial_id','Warranty Cases'),
         #Notes
         'notes':fields.text('Notes'),
         

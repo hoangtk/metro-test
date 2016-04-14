@@ -18,7 +18,7 @@
                 <button name="print_quotation" position="after">
                   <button name="%(open_pay_sale_order)d"
                       string="Register Payments"
-                      type="action" states="draft,sent"/>
+                      type="action" states="draft,sent" context="{'active_id':id}"/>
                 </button>
                 <field name="payment_method_id" position="after" >
                     <group name="payments" string="Generated Payments" colspan="4">

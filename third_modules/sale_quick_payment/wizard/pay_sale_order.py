@@ -30,7 +30,7 @@ class pay_sale_order(orm.TransientModel):
     _columns = {
         'journal_id': fields.many2one('account.journal', 'Journal'),
         'amount': fields.float('Amount',
-                               digits_compute=dp.get_precision('Sale Price')),
+                               digits_compute=dp.get_precision('Account')),
         'date': fields.datetime('Payment Date'),
         'description': fields.char('Description', size=64),
     }

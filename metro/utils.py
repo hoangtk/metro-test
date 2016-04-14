@@ -325,12 +325,14 @@ def field_set_file(self, cr, uid, id, field_name, value, args, context=None):
                   ('res_model', '=', self._name)])
     file_id = None
     if file_ids:
+        #+++ HoangTK - 03/18/2016 - Fix can not replace same file name
         file_id = file_ids[0]
-        if args and args.get('unlink'):
-            #called by related object's unlink method, need manual program on the model to call this method
-            attachment_obj.unlink(cr, uid, [file_id], context=context)
-        else:
-            attachment_obj.write(cr, uid, file_id, {'datas': value})
+        #if args and args.get('unlink'):
+        #    #called by related object's unlink method, need manual program on the model to call this method
+        #    attachment_obj.unlink(cr, uid, [file_id], context=context)
+        #else:
+        attachment_obj.write(cr, uid, file_id, {'datas': value})
+        #--- HoangTK - 03/18/2016 - Fix can not replace same file name
     else:
         file_id = attachment_obj.create(
             cr, uid, {'name':  field_name,

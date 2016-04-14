@@ -228,16 +228,7 @@
     <para style="Standard">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="535.0" style="Table_Outer_Notes">
-      <tr>
-        <td>
-          <para style="terp_default_9">[[ format(o.notes or '') ]]</para>
-          <para style="terp_default_9">
-            <font color="white"> </font>
-          </para>
-        </td>
-      </tr>
-    </blockTable>
+    <para style="terp_default_9">[[ format(o.notes or '') ]]</para>
     <blockTable colWidths="233.0,28.0,274.0" repeatRows="1" style="Table1">
       <tr>
         <td>

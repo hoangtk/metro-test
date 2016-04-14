@@ -377,6 +377,8 @@
 		                    <label string="All weights and measurements are Metric (KG and MM)" colspan="4"/>
 	                    </page>
 	                    <page string="Warranty">
+                            <!--+++ HoangTK : 02/18/2016 Remove the warranty history, link to warranty module instead -->
+                            <!--
                         <group col="2" colspan="2">
                           <field name="warranty_start_date"/>
                           <field name="warranty_finish_date"/>
@@ -397,7 +399,10 @@
 	                    			<field name="action_taken"/>
 	                    			<field name="status"/>
 	                    		</tree>
-	                    	</field>
+	                    	</field> -->
+                            <field name="warranty_ids" widget="one2many_list" nolabel="1" colspan="4" context="{'default_serial_id':id}">
+                            </field>
+                            <!--... HoangTK : 02/18/2016 Remove the warranty history, link to warranty module instead -->
 	                    </page>
                         <page string="Images">
                             <group  colspan="2">

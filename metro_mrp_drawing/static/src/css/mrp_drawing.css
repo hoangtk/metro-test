@@ -1,9 +1,13 @@
 @CHARSET "UTF-8";
-td [title^="P "],td [title^="B "],td [title^="D "],td [title^="W "],td [title^="Ct "],td [title^="Ps "] {
-    background: #efeff8;
-}
-td [data-field^="P_"],td [data-field^="B_"],td [data-field^="D_"],td [data-field^="W_"],td [data-field^="Ct_"],td [data-field^="Ps_"] {
-    background: #efeff8;
+td [data-field^="P_"],td [data-field^="B_"],td [data-field^="D_"],
+td [data-field^="W_"],td [data-field^="Ct_"],td [data-field^="Ps_"],
+td [data-field^="Fc_"],td [data-field^="Ma_"],td [data-field^="Mi_"],
+td [data-field^="A_"],td [data-field^="Bt_"],td [data-field^="G_"],td [data-field^="K_"],
+td [data-field^="prepare_qty"],td [data-field^="done_qty"],td [data-field^="need_qty"],
+td [data-field^="task_prepare_qty"],td [data-field^="task_done_qty"],td [data-field^="task_need_qty"],
+td [data-field^="next_step"]{
+    /*background: #eee;*/
+    border-left:1px solid #dddddd;
 }
 .metro_header, .metro_header_last{
 	display:block;
@@ -17,4 +21,21 @@ td [data-field^="P_"],td [data-field^="B_"],td [data-field^="D_"],td [data-field
 }
 .metro_header_last{
 	border-right:none;
+}
+.openerp table.oe_list_content tr:hover,
+.openerp .oe_form_field_one2many table.oe_list_content > tbody tr:nth-child(odd):hover,
+.openerp .oe_form_field_many2many table.oe_list_content > tbody tr:nth-child(odd):hover,
+.openerp table.oe_list_content > tbody > tr:nth-child(odd):hover,
+ .openerp table.oe_list_content > tbody > tr:nth-child(odd):hover td,
+ .openerp table.oe_list_content > tbody > tr:nth-child(odd):hover th{
+    background-color:#ffff99;
+}
+.openerp table.oe_list_content tr.oe_list_header_columns:hover,.openerp table.oe_list_content tfoot tr:hover{
+    background-color:#eeeeee;
+}
+.openerp .oe_form_editable .oe_list_editable .oe_list_content tr:hover td.oe_readonly{
+    background-color:#ffff99;
+}
+.openerp .oe_form_field_one2many .oe_list_content > tbody tr:nth-child(odd), .openerp .oe_form_field_many2many .oe_list_content > tbody tr:nth-child(odd){
+    background-image:linear-gradient(to bottom, #f0f0fa, #eeeef6);
 }

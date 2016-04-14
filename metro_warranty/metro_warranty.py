@@ -99,7 +99,8 @@ class warranty_issue(osv.osv):
     _columns = {
         'case_id': fields.many2one('warranty.cases','Issue'),
         'issue_id' : fields.char('Issue', size=1000), 
-        'resolution' : fields.char('Resolution', size=1000)
+        'resolution' : fields.char('Resolution', size=1000),
+        'cause': fields.char('Cause',size=256),
     }
     
 warranty_issue()

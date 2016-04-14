@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <act_window name="Generate Purchase Order"
+            res_model="pr.generate.po.wizard"
+            src_model="pur.req"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            multi="True"
+            id="act_pur_req_po_all"/>
+        <record id="view_pr_generate_po_wizard" model="ir.ui.view">
+            <field name="name">view_pr_generate_po_wizard</field>
+            <field name="model">pr.generate.po.wizard</field>
+            <field name="arch" type="xml">
+                <form string="PR Generate PO Wizard" version="7.0">
+                    <separator string="Please review the purchase orders before creation"/>
+                    <group>
+                        <field name="pr_id" invisible="1"/>
+                        <field name="po_ids" colspan="4" nolabel="1">
+                            <tree string="Purchase Order">
+                                <field name="supplier_id"/>
+                                <field name="total_quantity"/>
+                            </tree>
+                            <form string="Purchase Order" version="7.0">
+                                <label for="supplier_id"/>
+                                <field name="supplier_id"/>
+                                <label for="total_quantity"/>
+                                <field name="total_quantity"/>
+                                <separator string="Purchase Order Lines" colspan="4"/>
+                                <field name="line_ids" colspan="4" nolabel="1">
+                                    <tree string="Purchase Order Lines" editable="bottom">
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="quantity" readonly="1"/>
+                                        <field name="uom_id" readonly="1"/>
+                                        <field name="price" readonly="1"/>
+                                        <field name="date_required"/>
+                                        <field name="mfg_ids" widget="many2many_tags"/>
+                                        <field name="req_reason"/>
+                                        <field name="supplier_prod_id" invisible="1"/>
+                                        <field name="supplier_prod_name"/>
+                                        <field name="supplier_prod_code"/>
+                                        <field name="supplier_delay"/>
+                                    </tree>
+                                </field>
+                            </form>
+                        </field>
+                    </group>
+                    <footer>
+                        <button name="do_generate" string="Generate PO" type="object" class="oe_highlight"/>
+                        <button name="do_generate_view" string="Generate and view PO" type="object" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

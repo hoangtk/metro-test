@@ -90,8 +90,8 @@ class task_print(osv.osv_memory):
             project_ids = self.pool.get('project.project').search(cr, uid, [('project_type','=',data.task_type)],order='priority asc, sequence asc, production_id desc',context=context)
             task_domain += [('project_id','in',project_ids)]
         if data.task_day:
-            task_domain += ['|',('date_start','=',False),('date_start','<=', data.task_day + ' 23:59:59'),'|',('date_end','=',False),('date_end','>=', data.task_day + ' 00:00:00')]
-            task_domain += [('state','!=','cancelled')]
+            #task_domain += ['|',('date_start','=',False),('date_start','<=', data.task_day + ' 23:59:59'),'|',('date_end','=',False),('date_end','>=', data.task_day + ' 00:00:00')]
+            #task_domain += [('state','!=','cancelled')]
             task_day = data.task_day
         if task_domain:
             active_ids = self.pool.get('project.task').search(cr, uid, task_domain, context=context)

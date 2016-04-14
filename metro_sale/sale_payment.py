@@ -21,7 +21,7 @@
 ##############################################################################
 from osv import fields,osv,orm
 import openerp.addons.decimal_precision as dp
-
+import math
 class sale_order(osv.osv):
     _inherit="sale.order"
         
@@ -129,12 +129,14 @@ class sale_order(osv.osv):
 #redefine the columns in sale_payment_method/sale.py
         'residual': fields.function(
             _get_amount,
+            type='float',
             digits_compute=dp.get_precision('Account'),
             string='Balance',
             store=False,
             multi='payment'),
         'amount_paid': fields.function(
             _get_amount,
+            type='float',
             digits_compute=dp.get_precision('Account'),
             string='Amount Paid',
             store=False,
@@ -197,7 +199,7 @@ class account_move(osv.osv):
 class pay_sale_order(orm.TransientModel):
     _inherit = 'pay.sale.order'       
     _columns = {
-        'amount_max': fields.float('Max Amount'),
+        'amount_max': fields.float('Max Amount',digits_compute=dp.get_precision('Account')),
         'attachment': fields.binary('Attachment'),
         'attachment_name': fields.char('Attachment File Name'),
     }
@@ -211,13 +213,15 @@ class pay_sale_order(orm.TransientModel):
             return order.residual
         return False    
     _defaults = {
-        'amount': 0,
+        'amount': _get_amount,
         'amount_max':_get_amount,
         'description':u'Customer Advance Payment'
     }    
     def _check_amount(self, cr, uid, ids, context=None):
         for pay in self.browse(cr, uid, ids, context=context):
-            if pay.amount <= 0 or pay.amount > pay.amount_max:
+            #+++ HoangtK - 02/15/2016 : Fix floating point rounding issue
+            precision = 6
+            if pay.amount <= 0 or math.ceil(pay.amount * (10** precision)) > math.ceil(pay.amount_max * (10**precision)):
                 return False
         return True
     _constraints = [(_check_amount, 'Pay amount only can be between zero and the balance.', ['amount'])]

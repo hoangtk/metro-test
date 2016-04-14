@@ -100,6 +100,10 @@ openerp.metro = function (instance) {
 	        return _.template('<image src="<%-src%>" width="50px" height="50px"/>', {src: img_url,});
     	}
     });
+    instance.web.form.widgets.add('xlsfile_widget', 'instance.web.form.FieldBinaryXlsFile');
+    instance.web.form.FieldBinaryXlsFile = instance.web.form.FieldBinaryFile.extend({
+        template: 'FieldBinaryXlsFile',
+    });
 
     instance.web.list.Binary = instance.web.list.Column.extend({
         /**

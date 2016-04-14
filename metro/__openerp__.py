@@ -27,14 +27,17 @@
        "wizard/confirm_message_view.xml",       
         'wizard/file_down_view.xml',
         'rpt_base_view.xml',
-        'ir_translation_view.xml'
+        'ir_translation_view.xml',
+        "warning_view.xml"
     ],
     'installable': True,
     'auto_install': False,
     'application': True,
     #web
     "js": ["static/src/js/metro.js"],
-    'qweb' : ["static/src/xml/lang_switch.xml"],
+    'qweb' : ["static/src/xml/lang_switch.xml",
+              "static/src/xml/base.xml",
+              ],
     'css' : ["static/src/css/lang_switch.css",
              "static/src/css/metro.css",],    
 }

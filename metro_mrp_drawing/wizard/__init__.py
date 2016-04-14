@@ -21,5 +21,8 @@
 
 import task_print
 import generate_pr_wizard
+import print_pr_wizard
+import update_do_bom
+import pr_generate_po_wizard
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

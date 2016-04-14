@@ -15,7 +15,7 @@ instance.web.ListView.List = instance.web.ListView.List.extend({
             var $row = self.$current.find('[data-id=' + record.get('id') + ']');
             for(var i=0, length=self.columns.length; i<length; ++i) {
             //alert(self.columns[i].name);
-		if(self.columns[i].widget === 'drawing_url') {
+		        if(self.columns[i].widget === 'drawing_url') {
                 	var $cell = $row.find((_.str.sprintf('[data-field=%s]', self.columns[i].id)));
                 	var download_url;
                 	var value = record.get(self.columns[i].id);
@@ -75,4 +75,48 @@ instance.web.form.One2ManyList = instance.web.form.One2ManyList.extend({
         this.pad_table_to(4);
     }
   }); 
+    instance.web.FormView = instance.web.FormView.extend({
+        load_form: function(data) {
+            var self = this;
+            this._super(data);
+            this.$el.find("#hide_drawing_file").click(function(element){
+                self.$el.find("td[data-field='drawing_file']").each(function(key,value){
+                    if ($(this).text())
+                        $(this).parent().toggle();
+                });
+            });
+            this.$el.find("#part_type_select").change(function(element){
+                var selectValue = self.$el.find("#part_type_select").val();
+                if (selectValue == 'ALL')
+                    self.$el.find("td[data-field='part_type']").each(function(key,value){
+                        $(this).parent().show();
+                    });
+                else
+                {
+                    self.$el.find("td[data-field='part_type']").each(function(key,value){
+                        $(this).parent().hide();
+                    });
+                    self.$el.find("td[data-field='part_type']").each(function(key,value){
+                        if ($(this).text() == selectValue)
+                            $(this).parent().show();
+                    });
+                }
+            });
+            //this.checkFloatThead();
+        },
+        checkFloatThead: function(){
+            self = this;
+            if ($(document).find('.oe_list_content').length > 0)
+            {
+
+                var $tables = $(document).find('.oe_list_content');
+                console.log($tables);
+                $tables.floatThead({
+                                    position: 'fixed'
+                                    });
+	        }else
+                setTimeout(self.checkFloatThead, 100 );
+        },
+    });
 };
+

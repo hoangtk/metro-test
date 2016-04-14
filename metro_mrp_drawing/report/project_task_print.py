@@ -128,11 +128,12 @@ class project_task_print_with_parts(report_sxw.rml_parse):
         return result
     def _get_task_quantities(self, task):
         result = []
-        i = 1
+        #i = 1
         for line in task.task_lines:
             if self.task_day or line.need_qty > 0:
                 r = {}
-                r['id'] = i
+                r['id'] = line.sequence
+                r["item_no"] = line.item_no
                 r['name'] = line.product_id.name
                 r['need_qty'] = line.need_qty
                 r['done_qty'] = line.done_qty
@@ -140,11 +141,11 @@ class project_task_print_with_parts(report_sxw.rml_parse):
                 if task.production_id.product_qty > 0:
                     r['bom_qty'] = int(line.need_qty / task.production_id.product_qty)
                 result.append(r)
-                if i% 2 > 0:
+                if line.sequence % 2 > 0:
                     r['style'] = 'ODD'
                 else:
                     r['style'] = 'EVEN'
-                i = i + 1
+                #i = i + 1
         return result
     def _get_sum_bom_qty(self, task):
         result = 0

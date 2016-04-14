@@ -8,7 +8,8 @@
                <form string="Task printing by group" version="7.0">
                		<separator string="Please select the group type"/>
                     <field name="print_type" nolabel="1"/>
-                    <separator string="Day for daily sheet, if set this date, then ingore the tasks that you selected, system will print all the tasks of this day"/>
+                    <!--<separator string="Day for daily sheet, if set this date, then ingore the tasks that you selected, system will print all the tasks of this day"/>-->
+                    <separator string="Day for daily sheet:"/>
                     <field name="task_day" nolabel="1"/>
                     <footer>
                         <button name="do_print" string="Print" type="object" class="oe_highlight"/>

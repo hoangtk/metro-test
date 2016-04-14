@@ -47,6 +47,7 @@
                                     <tree string="Issues" editable="top">
                                         <field name="issue_id"/>
                                         <field name="resolution"/>
+                                        <field name="cause"/>
                                     </tree>
                                 </field>   
 		                    </group> 

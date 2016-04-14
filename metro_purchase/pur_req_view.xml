@@ -51,7 +51,7 @@
                     </group>
                 </group>
                  
-                <separator string="Prodcuts"/>
+                <separator string="Products"/>
                 <field name="line_ids">
                     <tree string="Products">
                         <field name="product_id" on_change="onchange_product_id(product_id,contexxt)"/>

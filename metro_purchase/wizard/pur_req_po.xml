@@ -15,7 +15,7 @@
             <field name="model">pur.req.po</field>
             <field name="arch" type="xml">
                 <form string="Requisition lines" version="7.0">
-                    <separator string="Select supplier and the prodcuts that you want to generate PO."/>
+                    <separator string="Select supplier and the products that you want to generate PO."/>
                     <label for="partner_id"/>
                     <field name="partner_id" on_change="onchange_partner(partner_id,line_ids,context)"/>
                     <label for="line_ids"/>

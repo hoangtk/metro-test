@@ -1,12 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <record id="metro_mrp_production_form_view" model="ir.ui.view">
-            <field name="name">metro_mrp_production_form_view</field>
+        <record id="metro_project_task_completion_tree_view" model="ir.ui.view">
+            <field name="name">metro_project_task_completion_tree_view</field>
+            <field name="model">project.task.completion</field>
+            <field name="arch" type="xml">
+                <tree string="Task Completion">
+                    <field name="date"/>
+                    <field name="mo_id"/>
+                    <field name="dept_id"/>
+                    <field name="big_subassembly_id"/>
+                    <field name="total_qty"/>
+                    <field name="user_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        <record id="metro_project_task_completion_form_view" model="ir.ui.view">
+            <field name="name">metro_project_task_completion_form_view</field>
+            <field name="model">project.task.completion</field>
+            <field name="arch" type="xml">
+                <form string="Task Completion" version="7.0">
+                    <header>
+    				    <button name="action_confirm" string="Confirm" states="draft" class="oe_highlight" type="object"/>
+                        <button name="action_draft" string="Set to Draft" states="confirmed,cancelled" type="object" groups="metro_mrp.group_mrp_supervisor"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed"/>
+                    </header>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="mo_id" on_change="onchange_mo_dept_big_subassembly(mo_id, dept_id, big_subassembly_id)"/>
+                            <field name="dept_id" domain="[('code','!=',False)]" on_change="onchange_mo_dept_big_subassembly(mo_id, dept_id, big_subassembly_id)"/>
+                            <field name="big_subassembly_id" on_change="onchange_mo_dept_big_subassembly(mo_id, dept_id, big_subassembly_id)"/>
+                            <field name="task_id" on_change="onchange_task_id(task_id)" domain="[('project_type','=','mfg'),('dept_id','=',dept_id),('production_id','=',mo_id),('big_subassembly_id','=',big_subassembly_id)]"/>
+                        </group>
+                        <group>
+                            <field name="name" invisible="1"/>
+                            <field name="date_create"/>
+                            <field name="user_id"/>
+                            <field name="total_qty"/>
+                        </group>
+                        <separator string="Completion Lines" colspan="4"/>
+    				    <field name="completion_lines" nolabel="1" colspan="4" context="{'default_completion_id':id}" options="{'no_create': True}">
+    					    <tree string="Lines" editable="bottom">
+                                <field name="sequence"/>
+                                <field name="item_no"/>
+                                <field name="task_line_id" invisible="1"/>
+                                <field name="product_id"/>
+                                <field name="prepare_qty"/>
+                                <field name="done_qty"/>
+                                <field name="need_qty"/>
+                                <field name="task_done_qty"/>
+                                <field name="task_need_qty"/>
+                                <field name="task_prepare_qty"/>
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="view_project_task_completion_filter">
+            <field name="name">view_project_taks_completion_filter</field>
+            <field name="model">project.task.completion</field>
+            <field name="arch" type="xml">
+                <search string="Search Task Completion">
+                    <field name="mo_id"/>
+                    <field name="date"/>
+                    <field name="dept_id"/>
+                    <field name="user_id" />
+                    <field name="task_id"/>
+                    <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                    <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]"/>
+                    <separator/>
+                    <filter icon="terp-personal-" string="Cancelled"  domain="[('state','=', 'cancelled')]" help="Canceled"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_project_task_completion">
+            <field name="name">Dispatcher Window</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">project.task.completion</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_project_task_completion_filter"/>
+        </record>
+
+        <menuitem
+            id="menu_project_task_completion"
+            sequence="12"
+            parent="mrp.menu_mrp_manufacturing"
+            action="action_project_task_completion"
+            groups="mrp.group_mrp_user"/>
+        <record id="metro_mrp_production_form_view_with_drawing_order" model="ir.ui.view">
+            <field name="name">metro_mrp_production_with_drawing_order_form_view</field>
             <field name="model">mrp.production</field>
             <field name="inherit_id" ref="metro_mrp.metro_mrp_production_form_view"/>
             <field name="arch" type="xml">
-                <data>            
+                <data>
+                    <xpath expr="//field[@name='location_src_id']" position="attributes">
+                        <attribute name="required">1</attribute>
+                    </xpath>
+                    <xpath expr="//field[@name='location_dest_id']" position="attributes">
+                        <attribute name="required">1</attribute>
+                    </xpath>
                     <xpath expr="//page[@string='Consumed Products']" position='before'>
                         <page string="Drawing Orders">
                             <button name="action_drawing_order_generate" states="draft"
@@ -23,7 +120,6 @@
                                     <field name="need_qty"/>
                                     <field name="state"/>
                                     <button name="generate_tasks" confirm="Old tasks will be deleted. Are you sure you want to continue ?" string="Generate Tasks" type="object" class="oe_highlight" icon="gtk-media-play"/>
-                                    
                                 </tree>
                                 <form string="Drawing Order" version="7.0">
                                     <header>
@@ -55,48 +151,19 @@
                                         <field name="need_qty"/>
                                         <!--<field name="state" invisible="1"/>-->
                                         <separator string="Drawing Order Lines" colspan="4"/>
+                                        <div colspan="4">P – Prepared Q-ty, D – Done Q-ty, N – Need Q-ty</div>
                                         <field name="order_lines" widget="one2many_list" colspan="4" nolabel="1">
                                             <tree string="Drawing Order Lines">
+                                                <field name="item_no"/>
                                                 <field name="product_id"/>
                                                 <field name="drawing_file_name" invisible="1"/>
                                                 <field name="drawing_file" widget="drawing_url" filename="drawing_file_name" attrs="{'invisible':[('drawing_file_name', '==', False)]}"/>                                            
                                                 <field name="work_steps" readonly="1"/>
+                                                <!--DYNAMIC WORKSTEPS DO NOT DELETE-->
                                                 <field name="P_prepare_qty" attrs="{'invisible':[('P_prepare_qty', '==', 0)]}" readonly="1"/>
                                                 <field name="P_done_qty" attrs="{'invisible':[('P_done_qty', '==', 0)]}" readonly="1"/>
                                                 <field name="P_need_qty" attrs="{'invisible':[('P_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Fc_prepare_qty" attrs="{'invisible':[('Fc_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Fc_done_qty" attrs="{'invisible':[('Fc_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Fc_need_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="B_prepare_qty" attrs="{'invisible':[('B_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="B_done_qty" attrs="{'invisible':[('B_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="B_need_qty" attrs="{'invisible':[('B_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ma_prepare_qty" attrs="{'invisible':[('Ma_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ma_done_qty" attrs="{'invisible':[('Ma_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ma_need_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="D_prepare_qty" attrs="{'invisible':[('D_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="D_done_qty" attrs="{'invisible':[('D_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="D_need_qty" attrs="{'invisible':[('D_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Mi_prepare_qty" attrs="{'invisible':[('Mi_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Mi_done_qty" attrs="{'invisible':[('Mi_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Mi_need_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="W_prepare_qty" attrs="{'invisible':[('W_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="W_done_qty" attrs="{'invisible':[('W_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="W_need_qty" attrs="{'invisible':[('W_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="A_prepare_qty" attrs="{'invisible':[('A_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="A_done_qty" attrs="{'invisible':[('A_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="A_need_qty" attrs="{'invisible':[('A_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ct_prepare_qty" attrs="{'invisible':[('Ct_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ct_done_qty" attrs="{'invisible':[('Ct_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ct_need_qty" attrs="{'invisible':[('Ct_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Bt_prepare_qty" attrs="{'invisible':[('Bt_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Bt_done_qty" attrs="{'invisible':[('Bt_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Bt_need_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ps_prepare_qty" attrs="{'invisible':[('Ps_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ps_done_qty" attrs="{'invisible':[('Ps_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="Ps_need_qty" attrs="{'invisible':[('Ps_need_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="G_prepare_qty" attrs="{'invisible':[('G_prepare_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="G_done_qty" attrs="{'invisible':[('G_done_qty', '==', 0)]}" readonly="1"/>
-                                                <field name="G_need_qty" attrs="{'invisible':[('G_need_qty', '==', 0)]}" readonly="1"/>
+                                                <!--DYNAMIC WORKSTEPS DO NOT DELETE-->
                                             </tree>
                                         </field>
                                     </group>
@@ -112,6 +179,14 @@
             <field name="model">project.task</field>
             <field name="inherit_id" ref="metro_project.project_task_mfg_form_view"/>
             <field name="arch" type="xml">
+                <xpath expr="//button[@name='do_open']" position="after">
+                     <button name="do_new_task_completion" string="Update Quantity" type="object"
+                                class="oe_highlight"
+                             context="{'default_task_id': id,
+                             'default_mo_id':production_id,
+                             'default_dept_id':dept_id,
+                             'default_big_subassembly_id': big_subassembly_id}"/>
+                </xpath>
                 <xpath expr="//field[@name='name']" position="attributes">
                     <attribute name="attrs">{"readonly":[("state","!=","draft")],"required":True}</attribute>
                 </xpath>
@@ -140,7 +215,7 @@
                     <field name="prepare_qty"/>
                     <field name="done_qty"/>
                     <field name="need_qty"/>
-                </xpath>    
+                </xpath>
                 <xpath expr="//field[@name='dept_id']" position="after">
                      <field name="dept_code" invisible="1"/>
                 </xpath> 
@@ -148,64 +223,61 @@
                      <field name="big_subassembly_id" attrs="{'invisible':[('project_type','!=','mfg')]}"/>
                 </xpath>
                 <xpath expr="//page[@string='Employees']" position="before">
-                    <page string="Tak Lines" attrs="{'invisible':[('project_type','!=','mfg')]}">
-                        <field name="task_lines" nolabel="1" colspan="4" attrs="{'readonly': [('state','in',['draft','done','cancelled'])]}">
+                    <page string="Task Lines" attrs="{'invisible':[('project_type','!=','mfg')]}">
+                        <button name="download_pdf" string="Download All PDFs" type="object" class="oe_inline" />
+                        <field name="task_lines" nolabel="1" colspan="4" options="{'no_create': True}">
                             <tree string="Task Lines" editable="bottom">
+                                <field name="sequence" readonl="1" string="#"/>
+                                <field name="item_no"/>
                                 <field name="product_id" readonly="1"/>
-                                <field name="prepare_qty" readonly="1" attrs="{'invisible':[('prepare_qty', '==', 0)]}" sum="Total Prepare Quantity"/>
+                                <field name="drawing_file_name" invisible="1"/>
+                                <field name="drawing_file" widget="drawing_url" filename="drawing_file_name" attrs="{'invisible':[('drawing_file_name', '==', False)]}"/>
+                                <field name="prepare_qty" readonly="1" attrs="{'invisible':[('need_qty', '==', 0)]}" sum="Total Prepare Quantity"/>
                                 <field name="done_qty" attrs="{'invisible':[('need_qty', '==', 0)],'readonly':['|','&amp;',('state','!=','on_working'),('state','!=','done'),('prepare_qty','==',0)]}" sum="Total Done Quantity"/>
                                 <field name="need_qty" readonly="1" attrs="{'invisible':[('need_qty', '==', 0)]}" sum="Total Need Quantity"/>
                                 <field name="next_step" readonly="1"/>
                                 <field name="state" readonly="1" attrs="{'invisible':[('need_qty', '==', 0)]}"/>
                             </tree>
                         </field>
-                    </page>                
+                    </page>
+                    <page string="Task Completion" attrs="{'invisible':[('project_type','!=','mfg')]}" >
+                        <field name="completion_ids" nolabel="1" colspan="4" options="{'no_create': True}">
+                            <tree string="Task Completion" editable="bottom">
+                                <field name="date" readonly="1"/>
+                                <field name="total_qty" readonly="1"/>
+                                <field name="user_id" readonly="1"/>
+                                <field name="state" readonly="1"/>
+                            </tree>
+                        </field>
+                    </page>
                     <page string="Drawing Order Lines" attrs="{'invisible':[('project_type','!=','mfg')]}">
+                        <button name="download_all_pdf" string="Download All PDFs" type="object" class="oe_inline" />
+                        <div>P – Prepared Q-ty, D – Done Q-ty, N – Need Q-ty</div>
                         <field name="drawing_order_lines" nolabel="1" colspan="4" context="{'dept_code':dept_code}" readonly="1">
                             <tree string="Lines" editable="bottom">
+                                <field name="item_no"/>
                                 <field name="product_id" attrs="{'readonly':[('status','!=','')]}"/>
                                 <field name="part_type"/>
                                 <field name="drawing_file_name" invisible="1"/>
                                 <field name="drawing_file" filename="drawing_file_name" attrs="{'invisible':[('drawing_file_name', '==', False)]}" widget="drawing_url"/>
                                 <field name="work_steps"  class="metro_high_light"/>
+                                <!--DYNAMIC WORKSTEPS DO NOT DELETE-->
                                 <field name="P_prepare_qty" class="metro_high_light" attrs="{'invisible':[('P_prepare_qty', '==', 0)],'readonly': True}"/>
                                 <field name="P_done_qty" class="metro_high_light" attrs="{'invisible':[('P_need_qty', '==', 0)],'readonly': True}"/>
                                 <field name="P_need_qty" class="metro_high_light" attrs="{'invisible':[('P_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Fc_prepare_qty" attrs="{'invisible':[('Fc_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Fc_done_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Fc_need_qty" attrs="{'invisible':[('Fc_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="B_prepare_qty" class="metro_high_light" attrs="{'invisible':[('B_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="B_done_qty" class="metro_high_light" attrs="{'invisible':[('B_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="B_need_qty" class="metro_high_light" attrs="{'invisible':[('B_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ma_prepare_qty" attrs="{'invisible':[('Ma_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ma_done_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ma_need_qty" attrs="{'invisible':[('Ma_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="D_prepare_qty" class="metro_high_light" attrs="{'invisible':[('D_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="D_done_qty" class="metro_high_light" attrs="{'invisible':[('D_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="D_need_qty" class="metro_high_light" attrs="{'invisible':[('D_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Mi_prepare_qty" attrs="{'invisible':[('Mi_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Mi_done_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Mi_need_qty" attrs="{'invisible':[('Mi_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="W_prepare_qty" class="metro_high_light" attrs="{'invisible':[('W_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="W_done_qty" class="metro_high_light" attrs="{'invisible':[('W_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="W_need_qty" class="metro_high_light" attrs="{'invisible':[('W_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="A_prepare_qty" attrs="{'invisible':[('A_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="A_done_qty" attrs="{'invisible':[('A_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="A_need_qty" attrs="{'invisible':[('A_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ct_prepare_qty" class="metro_high_light" attrs="{'invisible':[('Ct_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ct_done_qty" class="metro_high_light" attrs="{'invisible':[('Ct_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ct_need_qty" class="metro_high_light" attrs="{'invisible':[('Ct_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Bt_prepare_qty" attrs="{'invisible':[('Bt_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Bt_done_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Bt_need_qty" attrs="{'invisible':[('Bt_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ps_prepare_qty" class="metro_high_light" attrs="{'invisible':[('Ps_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ps_done_qty" class="metro_high_light" attrs="{'invisible':[('Ps_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="Ps_need_qty" class="metro_high_light" attrs="{'invisible':[('Ps_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="G_prepare_qty" attrs="{'invisible':[('G_prepare_qty', '==', 0)],'readonly': True}"/>
-                                <field name="G_done_qty" attrs="{'invisible':[('G_need_qty', '==', 0)],'readonly': True}"/>
-                                <field name="G_need_qty" attrs="{'invisible':[('G_need_qty', '==', 0)],'readonly': True}"/>
+                                <!--DYNAMIC WORKSTEPS DO NOT DELETE-->
                                 <field name="status" readonly="1"/>
                             </tree>
+                        </field>
+                    </page>
+                    <page string="History">
+                        <field name="modifyhistory_ids" colspan="4" nolabel="1" widget="many2many_list" readonly="1">
+                           <tree string="History">
+                               <field name="date"/>
+                               <field name="user_id"/>
+                               <field name="content"/>
+                               <field name="vals"/>
+                           </tree>
                         </field>
                     </page>
                 </xpath>
@@ -382,6 +454,34 @@
             <field name="model_id" ref="model_project_task" />
             <field name="model">project.task</field>
             <field name="key2">client_action_multi</field>
-        </record>                               
+        </record>
+        <record model="ir.ui.view" id="project_task_modifyhistory_tree_view">
+            <field name="name">project.task.modifyhistory.tree</field>
+            <field name="model">project.task.modifyhistory</field>
+            <field name="arch" type="xml">
+                <tree string="Project Task Modify History">
+                    <field name="date"/>
+                    <field name="task_id"/>
+                    <field name="user_id"/>
+                    <field name="content"/>
+                    <field name="vals"/>
+                </tree>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="project_task_modifyhistory_form_view">
+            <field name="name">project.task.modifyhistory.form</field>
+            <field name="model">project.task.modifyhistory</field>
+            <field name="arch" type="xml">
+                <form string="Project Task Modify History" version="7.0">
+                    <group>
+                    <field name="date"/>
+                    <field name="task_id"/>
+                    <field name="user_id"/>
+                    <field name="content"/>
+                    <field name="vals"/>
+                    </group>
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>
