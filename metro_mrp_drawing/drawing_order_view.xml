@@ -32,6 +32,7 @@
 	                    		<button string="Upload Part Drawings" name="%(action_upload_multi_drawings)d" type="action" states="draft,rejected" class="oe_inline" />
 	                    		<button name="print_pdf" string="Print PDF" type="object" class="oe_inline" />
                                 <button name="create_missing_erpno" string="Request Missing ERP No" type="object" class="oe_inline" />
+                                <button name="update_missing_erpno" string="Update Missing ERP No" type="object" class="oe_inline" />
 	                    </div>
     				</group>
                  	<group style="color:red">
@@ -73,6 +74,7 @@
                                 <option value="PURCH-S">PURCH-S</option>
                                 <option value="PURCH-OEM">PURCH-OEM</option>
                                 <option value="PURCH-M">PURCH-M</option>
+                                <option value="MATERIALS">MATERIALS</option>
                                 <option value="PURCH-MC">PURCH-MC</option>
                                 <option value="PURCH-MS">PURCH-MS</option>
                                 <option value="PURCH-ML">PURCH-ML</option>
@@ -381,6 +383,7 @@
                                 <field name="name"/>
                                 <field name="description"/>
                                 <field name="product_id"/>
+                                <field name="erp_no"/>
                             </tree>
                         </field>
                     </group>

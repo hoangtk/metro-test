@@ -91,6 +91,18 @@ instance.web.form.One2ManyList = instance.web.form.One2ManyList.extend({
                     self.$el.find("td[data-field='part_type']").each(function(key,value){
                         $(this).parent().show();
                     });
+                else if (selectValue == 'MATERIALS')
+                {
+                    self.$el.find("td[data-field='part_type']").each(function(key,value){
+                        $(this).parent().hide();
+                    });
+                    self.$el.find("td[data-field='part_type']").each(function(key,value){
+                        if ($(this).text() == 'PURCH-MS' ||
+                            $(this).text() == 'PURCH-MC' ||
+                            $(this).text() == 'PURCH-ML')
+                            $(this).parent().show();
+                    });
+                }
                 else
                 {
                     self.$el.find("td[data-field='part_type']").each(function(key,value){

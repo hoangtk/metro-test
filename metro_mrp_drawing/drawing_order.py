@@ -11,8 +11,11 @@ from openerp.addons.metro import utils
 import zipfile
 import random
 import os
+import base64
 from openerp import SUPERUSER_ID
 import xlrd
+import xlwt
+from xlutils.copy import copy
 from xlrd import XLRDError
 import StringIO
 from decimal import *
@@ -48,6 +51,7 @@ class missing_erpno_line(osv.osv):
     _columns = {
         'missing_id': fields.many2one('missing.erpno','Missing ERP No'),
         'product_id': fields.many2one('product.product', string='Product'),
+        'erp_no': fields.related('product_id','default_code', string='ERP #',type='char',size=128,readonly=True),
         'item_no': fields.char('Item No', readonly=True),
         'name': fields.char('Part Number', size=128, readonly=True),
         'description': fields.char('Description', size=128, readonly=True),
@@ -474,14 +478,15 @@ class drawing_order(osv.osv):
                 bom_line = self.read_bom_line(worksheet=worksheet, row=row)
                 if bom_line['part_name']:
                     # Rule 3: Check missing erp_no and exists in database
-                    if not bom_line['erp_no']:
-                        row_logs.append('ERP # is missing')
-                    else:
-                        product_ids = product_obj.search(cr, uid, [
-                            ('default_code', '=', bom_line['erp_no'])
-                        ])
-                        if not product_ids:
-                            row_logs.append('ERP # (%s) is invalid' % bom_line['erp_no'])
+                    if bom_line['part_type'] not in ['PRODUCED','PURCH-MS']:
+                        if not bom_line['erp_no']:
+                            row_logs.append('ERP # is missing')
+                        else:
+                            product_ids = product_obj.search(cr, uid, [
+                                ('default_code', '=', bom_line['erp_no'])
+                            ])
+                            if not product_ids:
+                                row_logs.append('ERP # (%s) is invalid' % bom_line['erp_no'])
                     try:
                         bom_qty = int(bom_line['bom_qty'])
 
@@ -573,10 +578,22 @@ class drawing_order(osv.osv):
                         work_steps = bom_line['work_steps']
                         steps = self.split_work_steps(work_steps)
                         if part_name:
-                            product_ids = product_obj.search(cr, uid, [
-                                ('default_code', '=', erp_no)
-                            ])
-                            product_id = product_ids[0]
+                            product_id = False
+                            if part_type in ['PRODUCED','PURCH-MS']:
+                                product_ids = product_obj.search(cr, uid, [
+                                    ('name', '=', part_name)
+                                ])
+                                if not product_ids:
+                                    product_id = product_obj.create(cr, uid, {
+                                        'name': part_name,
+                                    })
+                                else:
+                                    product_id = product_ids[0]
+                            else:
+                                product_ids = product_obj.search(cr, uid, [
+                                    ('default_code', '=', erp_no)
+                                ])
+                                product_id = product_ids[0]
                             first_step = steps[0]
                             last_step = steps[len(steps) - 1]
                             # Check if drawing order line exits ?
@@ -695,10 +712,66 @@ class drawing_order(osv.osv):
             row = 2
             while row < worksheet.nrows:
                 bom_line = self.read_bom_line(worksheet=worksheet, row=row)
-                if bom_line['part_name'] and not bom_line['erp_no']:
-                    missing_parts.append(bom_line)
+                if bom_line['part_name']:
+                    if bom_line['part_type'] not in ['PRODUCED','PURCH-MS']:
+                        if not bom_line['erp_no']:
+                            missing_parts.append(bom_line)
                 row += 1
         return missing_parts
+
+    def update_missing_erpno(self, cr, uid, ids, context=None):
+        missing_erpno_obj = self.pool.get('missing.erpno')
+        missing_erpno_line_obj = self.pool.get('missing.erpno.line')
+        part_names = []
+        for order in self.browse(cr, uid, ids):
+            if order.bom_file:
+                missing_erpno_parts = self.get_missing_erpno_parts(cr, uid, order.bom_file)
+                if len(missing_erpno_parts) > 0:
+                    bom_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xls')
+                    bom_file_name = bom_file.name
+                    bom_file.close()
+                    bom_file = open(bom_file_name, "wb+")
+                    bom_file.write(order.bom_file.decode('base64'))
+                    bom_file.close()
+                    #inputStr = StringIO.StringIO()
+                    #inputStr.write(order.bom_file.decode('base64'))
+                    workbook = xlrd.open_workbook(bom_file_name)
+                    new_workbook = copy(workbook)
+                    worksheet = workbook.sheet_by_index(0)
+                    new_worksheet = new_workbook.get_sheet(0)
+                    row = 2
+                    while row < worksheet.nrows:
+                        bom_line = self.read_bom_line(worksheet=worksheet, row=row)
+                        if bom_line['part_name']:
+                            if bom_line['part_type'] not in ['PRODUCED', 'PURCH-MS']:
+                                if not bom_line['erp_no']:
+                                    missing_ids = missing_erpno_obj.search(cr, uid, [('order_id','=',order.id)])
+                                    missing_line_ids = missing_erpno_line_obj.search(cr, uid, [
+                                        ('missing_id', 'in', missing_ids),
+                                        ('item_no','=',bom_line['item_no']),
+                                        ('name','=',bom_line['part_name']),
+                                        ('product_id','!=',False)
+                                    ])
+                                    if missing_line_ids:
+                                        missing_line = missing_erpno_line_obj.browse(cr, uid, missing_line_ids[0])
+                                        if missing_line.erp_no:
+                                            new_worksheet.write(row,3,missing_line.erp_no)
+                                            part_names.append(bom_line['part_name'])
+                        row += 1
+                    new_bom_file = tempfile.NamedTemporaryFile(delete=False,suffix='.xls')
+                    new_bom_file_name = new_bom_file.name
+                    new_bom_file.close()
+                    new_workbook.save(new_bom_file_name)
+                    new_file = open(new_bom_file_name,"rb")
+                    self.write(cr, uid, [order.id],{
+                        'bom_file': base64.b64encode(new_file.read()),
+                        'bom_file_name': order.name + '.xls',
+                    })
+                    new_file.close();
+        if len(part_names):
+            return self.pool.get('warning').info(cr, uid, title='Information', message=_(
+                "Part %s has been updated erp # to bom file!")%",".join(part_names))
+        return True
 
     def create_missing_erpno(self, cr, uid, ids, context=None):
         missing_erpno_obj = self.pool.get('missing.erpno')
@@ -721,7 +794,8 @@ class drawing_order(osv.osv):
                 "Missing erp no parts are created!"))
         return self.pool.get('warning').info(cr, uid, title='Information', message=_(
                 "Dont have any missing erp no parts to create!"))
-    # --- HoangTK - 12/08/2015: Override write method to update drawing order quantity
+    #--- HoangTK - 12/08/2015: Override write method to update drawing order quantity
+
     def print_pdf(self, cr, uid, ids, context=None):
         order_line_ids = []
         for id in ids:

@@ -26,6 +26,8 @@ from tools.translate import _
 from openerp.tools.translate import _
 from datetime import datetime
 import time
+from openerp.addons.metro import utils
+
 
 class warranty_cases(osv.osv):
     
@@ -48,7 +50,12 @@ class warranty_cases(osv.osv):
 #        'resolution': fields.text('Resolution'),
         'image': fields.text("Images"),
         'model_id': fields.many2one('mttl.models', 'Model', help="Metro Tow Trucks Model"),
-        'attachment_id': fields.many2one('ir.attachment','Attachments'),
+        #+++ HoangTK - 04/15/2016 - Fix can not upload attachment
+        #'attachment_id': fields.many2one('ir.attachment','Attachments'),
+        'attachment_file_name': fields.char('Attachment File Name',size=128),
+        'attachment_id': fields.function(utils.field_get_file, fnct_inv=utils.field_set_file, string="Attachment",
+                                    type="binary", multi="_get_file"),
+        #--- HoangTK - 04/15/2016 - Fix can not upload attachment
         'note': fields.text('Notes'),
         'active': fields.boolean('Active'),
     }

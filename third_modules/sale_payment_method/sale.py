@@ -268,11 +268,36 @@ class sale_order(orm.Model):
             'currency_id': currency_id,
             'sale_ids': [(4, sale.id)],
         }
+        #+++ HoangTK 04/19/2016: Auto switch parter account receivable when not match order currency
+
+        account_obj = self.pool.get('account.account')
+        current_account_receivable = partner.property_account_receivable
+        new_account_receivable_ids = False
+        if order_currency_id != company.currency_id.id:
+            new_account_receivable_ids = account_obj.search(cr, uid,
+                                                        [('parent_id', '=', current_account_receivable.parent_id.id),
+                                                         ('currency_id', '=', order_currency_id),
+                                                         ('type', '=', current_account_receivable.type),
+                                                         ('user_type', '=', current_account_receivable.user_type.id)
+                                                         ])
+            if new_account_receivable_ids:
+                debit_line.update({'debit': amount_currency})
+                credit_line.update({'credit': amount_currency})
+        else:
+            new_account_receivable_ids = account_obj.search(cr, uid,
+                                                       [('parent_id', '=', current_account_receivable.parent_id.id),
+                                                        ('currency_id', '=', False),
+                                                        ('type', '=', current_account_receivable.type),
+                                                        ('user_type', '=', current_account_receivable.user_type.id)
+                                                        ])
+        if new_account_receivable_ids:
+            credit_line.update({'account_id': new_account_receivable_ids[0]})
+        #--- HoangTK 04/19/2016: Auto switch parter account receivable when not match order currency
         #+++ HoangTK 11/12/2015: Not change amount if accounts and sale order have the same currency
-        if (partner.property_account_receivable.currency_id.id == journal.default_credit_account_id.currency_id.id and 
-			journal.default_credit_account_id.currency_id.id == order_currency_id):
-            debit_line.update({'debit': amount_currency})
-            credit_line.update({'credit': amount_currency})
+        # if (partner.property_account_receivable.currency_id.id == journal.default_credit_account_id.currency_id.id and
+			# journal.default_credit_account_id.currency_id.id == order_currency_id):
+        #      debit_line.update({'debit': amount_currency})
+        #      credit_line.update({'credit': amount_currency})
         #--- HoangTK 11/12/2015
         return debit_line, credit_line
 

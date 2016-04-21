@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../../Aditya/Source Code/.idea/Aditya.iml" filepath="$PROJECT_DIR$/../../../Aditya/Source Code/.idea/Aditya.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../Canxic/Source Code/.idea/Canxic.iml" filepath="$PROJECT_DIR$/../../../Canxic/Source Code/.idea/Canxic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../Devexpmed/Sourcecode/.idea/Devexpmed.iml" filepath="$PROJECT_DIR$/../../../Devexpmed/Sourcecode/.idea/Devexpmed.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../Devexpmed/Odoo/Odoo 8.0-20160219/server/openerp/addons/.idea/Devexpmed Odoo.iml" filepath="$PROJECT_DIR$/../../../Devexpmed/Odoo/Odoo 8.0-20160219/server/openerp/addons/.idea/Devexpmed Odoo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../HashMicro/EQUIP/Source code/addons/.idea/EQUIP.iml" filepath="$PROJECT_DIR$/../../../HashMicro/EQUIP/Source code/addons/.idea/EQUIP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Metro.iml" filepath="$PROJECT_DIR$/.idea/Metro.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../OpenERP/OpenERP70-0413-Test/Server/server/openerp/addons/.idea/Metro-Odoo.iml" filepath="$PROJECT_DIR$/../../OpenERP/OpenERP70-0413-Test/Server/server/openerp/addons/.idea/Metro-Odoo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../metroscrap/.idea/MetroScrap.iml" filepath="$PROJECT_DIR$/../metroscrap/.idea/MetroScrap.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../OpenERP/MetroScrap/Odoo 8.0-20160219/server/openerp/addons/.idea/MetroScrap-Odoo.iml" filepath="$PROJECT_DIR$/../../OpenERP/MetroScrap/Odoo 8.0-20160219/server/openerp/addons/.idea/MetroScrap-Odoo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../Michael/Source Code/.idea/Michael.iml" filepath="$PROJECT_DIR$/../../../Michael/Source Code/.idea/Michael.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../Michael/Odoo/Odoo 9.0-20160219/server/openerp/addons/.idea/Michael Odoo.iml" filepath="$PROJECT_DIR$/../../../Michael/Odoo/Odoo 9.0-20160219/server/openerp/addons/.idea/Michael Odoo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../PhuDien/Source Code/OpenERP/.idea/PhudienERP.iml" filepath="$PROJECT_DIR$/../../../PhuDien/Source Code/OpenERP/.idea/PhudienERP.iml" />
+    </modules>
+  </component>
+</project>
