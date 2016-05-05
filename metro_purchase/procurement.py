@@ -135,8 +135,12 @@ class cron_job(osv.osv_memory):
             pur_req_received = True
             for pur_req_line in pur_req.line_ids:
                 if not pur_req_line.generated_po:
-                    pur_req_received = False
+                    # +++ HoangTK - 05/05/2016 - Fix when all products are reserved
+                    if pur_req_line.product_qty_remain > 0:
+                        pur_req_received = False
+                        break
                     continue
+                    # --- HoangTK - 05/05/2016 - Fix when all products are reserved
                 pur_req_line_received = True
                 rec_qty = 0
                 #check the pur_req's po line receiving status

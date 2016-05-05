@@ -59,7 +59,8 @@
              'drawing_step_view.xml',
              'pur_req_view.xml',
              'mrp_view.xml',
-             'security/ir.model.access.csv'
+             'security/ir.model.access.csv',
+             'pur_req_workflow.xml',
              ],
     'installable': True,
     'auto_install': False,

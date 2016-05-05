@@ -102,6 +102,23 @@ class pur_req(osv.osv):
     _name = "pur.req"
     _inherit = "pur.req"
 
+    def _get_progress(self, cr, uid, ids, name, args, context=None):
+        result = {}
+        for req in self.browse(cr, uid, ids):
+            progress = 0.0
+            receive_qty = 0.0
+            total_qty = 0.0
+            for line in req.line_ids:
+                total_qty += line.product_qty
+                receive_qty += line.reserved_quantity
+            for po in req.po_ids:
+                for po_line in po.order_line:
+                    receive_qty += po_line.receive_qty - po_line.return_qty
+            if total_qty > 0:
+                progress = receive_qty * 100.0 / total_qty
+            result[req.id] = progress
+        return result
+
     def _get_days_progress(self, cr, uid, ids, name, args, context=None):
         result = {}
         for req in self.browse(cr, uid, ids):
@@ -167,7 +184,7 @@ class pur_req(osv.osv):
         'engineer': fields.many2one('res.users','Engineer',readonly=True),
         'assigned_to': fields.many2one('res.users','Assigned To',readonly=True),
         'delivery_date': fields.date('Delivery date (ETA)'),
-        'progress': fields.float('Progress',readonly=True),
+        'progress': fields.function(_get_progress,string='Progress',type="float",readonly=True),
         'days_progress': fields.function(_get_days_progress,string='Days in progress',type="float",readony=True),
         'supplier_no': fields.integer('Supplier No',readonly=True),
         'history_ids': fields.one2many('pur.req.history','pur_req_id','History',ondelete='cascade',readonly=True),
