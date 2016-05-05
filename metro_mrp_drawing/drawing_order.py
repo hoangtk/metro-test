@@ -39,9 +39,15 @@ class missing_erpno(osv.osv):
     _name = "missing.erpno"
     _description = "Missing ERP No"
     _columns = {
+        'creator': fields.many2one('res.users','Creator',readonly=True),
+        'date': fields.date('Date',readonly=True),
         'name': fields.related('order_id','name',string='Name',type='char',size=128),
         'order_id': fields.many2one('drawing.order', string='Drawing Order', readonly=True),
         'lines': fields.one2many('missing.erpno.line','missing_id', string='Missing Lines', ondelete="cascade"),
+    }
+    _defaults = {
+        'creator': lambda self,cr, uid, c: uid,
+        'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
     }
 missing_erpno()
 
@@ -76,6 +82,20 @@ class drawing_order(osv.osv):
     _description = "Drawing Order"
     _order = 'id desc'
 
+    def get_big_subassembly_qty(self, cr, uid, order):
+        result = 1
+        bom_obj = self.pool.get('mrp.bom')
+        mo_qty = order.mo_id.product_qty
+        big_assembly_bom_ids = bom_obj.search(cr, uid, [
+            ('bom_id', '=', order.mo_id.bom_id.id),
+            ('product_id', '=', order.product_id.id),
+        ])
+        if len(big_assembly_bom_ids) > 0:
+            big_assembly_boms = bom_obj.browse(cr, uid, big_assembly_bom_ids)
+            if order.mo_id.bom_id.product_qty > 0:
+                result = big_assembly_boms[0].product_qty / order.mo_id.bom_id.product_qty
+        return result * mo_qty
+
     def _get_product_ids_from_mo(self, cr, uid, mo):
         product_ids = []
         if mo.bom_id:
@@ -102,6 +122,37 @@ class drawing_order(osv.osv):
             if order.bom_log:
                 result[order.id] = _('Please check the Bom Log!')
         return result
+
+    def get_type_qty(self, cr, uid, ids, part_type):
+        result = {}
+        for order in self.browse(cr, uid, ids):
+            qty = 0
+            for line in order.order_lines:
+                if line.part_type == part_type:
+                    qty += line.bom_qty * self.get_big_subassembly_qty(cr, uid, order)
+            result[order.id] = qty
+        return result
+
+    def _get_produced_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PRODUCED')
+
+    def _get_purchs_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PURCH-S')
+
+    def _get_purchoem_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PURCH-OEM')
+
+    def _get_purchm_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PURCH-M')
+
+    def _get_purchmc_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PURCH-MC')
+
+    def _get_purchms_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PURCH-MS')
+
+    def _get_purchml_type_qty(self, cr, uid, ids, name, args, context=None):
+        return self.get_type_qty(cr, uid, ids, 'PURCH-ML')
 
     _columns = {
         'name': fields.char('Name', size=64, readonly=True,
@@ -143,6 +194,19 @@ class drawing_order(osv.osv):
         'bom_error': fields.function(_is_bom_error,string='Bom error',type="char",size=100,method=True),
         'mo_bigsubassembly_ids': fields.function(_get_mo_bigsubassembly,string='MO Big Subassembly',type="many2many",relation="product.product"),
         'confirm_date': fields.date(string='Confirm Date',readonly=True),
+        'produced_type_qty': fields.function(_get_produced_type_qty, string="PRODUCED Qty", type="integer",readonly=True),
+        'purchs_type_qty': fields.function(_get_purchs_type_qty, string="PURCH-S Qty", type="integer",
+                                             readonly=True),
+        'purchoem_type_qty': fields.function(_get_purchoem_type_qty, string="PURCH-OEM Qty", type="integer",
+                                           readonly=True),
+        'purchm_type_qty': fields.function(_get_purchm_type_qty, string="PURCH-M Qty", type="integer",
+                                             readonly=True),
+        'purchmc_type_qty': fields.function(_get_purchmc_type_qty, string="PURCH-MC Qty", type="integer",
+                                             readonly=True),
+        'purchms_type_qty': fields.function(_get_purchms_type_qty, string="PURCH-MS Qty", type="integer",
+                                            readonly=True),
+        'purchml_type_qty': fields.function(_get_purchml_type_qty, string="PURCH-ML Qty", type="integer",
+                                            readonly=True),
         # --- HoangTK - 11/16/2015
     }
     _defaults = {
@@ -453,7 +517,7 @@ class drawing_order(osv.osv):
         'part_type': self.get_string_from_xls_cell(worksheet.cell(row, 8).value),
         'bom_qty': worksheet.cell(row, 9).value,
         }
-    def check_bom_file_content(self, cr, uid, order_name, bom_file_name, bom_content):
+    def check_bom_file_content(self, cr, uid, order_name, bom_file_name, bom_content, check_bom_file_name = True):
         logs = []
         department_obj = self.pool.get('hr.department')
         product_obj = self.pool.get('product.product')
@@ -469,9 +533,10 @@ class drawing_order(osv.osv):
             worksheet = workbook.sheet_by_index(0)
             # Rule 2: File name, A1 cell in BOM File = Order name
             a1_cell = self.get_string_from_xls_cell(worksheet.cell(0, 0).value)
-            if bom_file_name != order_name or a1_cell != order_name:
-                logs.append(_('Bom file name (%s) and A1 cell (%s) not match drawing order name (%s)' % (
-                bom_file_name, a1_cell, order_name)))
+            if check_bom_file_name:
+                if bom_file_name != order_name or a1_cell != order_name:
+                    logs.append(_('Bom file name (%s) and A1 cell (%s) not match drawing order name (%s)' % (
+                    bom_file_name, a1_cell, order_name)))
             row = 2
             while row < worksheet.nrows:
                 row_logs = []
@@ -540,17 +605,8 @@ class drawing_order(osv.osv):
         department_obj = self.pool.get('hr.department')
         for order in self.browse(cr, uid, ids):
             if order.bom_file:
-                mo_qty = order.mo_id.product_qty
-                big_assembly_qty = 1
-                big_assembly_bom_ids = bom_obj.search(cr, uid, [
-                    ('bom_id', '=', order.mo_id.bom_id.id),
-                    ('product_id', '=', order.product_id.id),
-                ])
-                if len(big_assembly_bom_ids) > 0:
-                    big_assembly_boms = bom_obj.browse(cr, uid, big_assembly_bom_ids)
-                    if order.mo_id.bom_id.product_qty > 0:
-                        big_assembly_qty = big_assembly_boms[0].product_qty / order.mo_id.bom_id.product_qty
-                big_assembly_qty = mo_qty * big_assembly_qty
+                #mo_qty = order.mo_id.product_qty
+                big_assembly_qty = self.get_big_subassembly_qty(cr, uid, order)
                 # Remove old drawing order lines
                 old_drawing_order_line_ids = drawing_order_line_obj.search(cr, uid, [
                     ('order_id', '=', order.id)
@@ -613,7 +669,7 @@ class drawing_order(osv.osv):
                             order_line = drawing_order_line_obj.browse(cr, uid, order_line_id)
                             vals = {
                                 'item_no': item_no,
-                                'bom_qty': bom_qty,
+                                'bom_qty': bom_qty + order_line.bom_qty,
                                 'work_steps': work_steps,
                                 'first_step': first_step,
                                 'last_step': last_step,
@@ -673,6 +729,8 @@ class drawing_order(osv.osv):
         order_history_obj = self.pool.get('drawing.order.history')
         if result:
             self._generate_name(cr, uid, [result], context=context)
+            if vals.get('bom_file',False):
+               vals['bom_file'] = '**BOM FILE CONTENT**'
             order_history_obj.create(cr, uid, {
                 'drawing_order_id': result,
                 'user_id': uid,
@@ -691,6 +749,8 @@ class drawing_order(osv.osv):
         self.update_qty(cr, uid, ids)
         order_history_obj = self.pool.get('drawing.order.history')
         for order_id in ids:
+            if vals.get('bom_file', False):
+                vals['bom_file'] = '**BOM FILE CONTENT**'
             order_history_obj.create(cr, uid, {
                 'drawing_order_id': order_id,
                 'user_id': uid,

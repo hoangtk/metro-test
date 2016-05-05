@@ -36,6 +36,7 @@ class pur_req_po_line(osv.osv_memory):
     _columns = {
         'wizard_id': fields.many2one('pur.req.po', string="Wizard"),
         'product_id': fields.many2one('product.product', 'Product', required=True),
+        'supplier_id': fields.many2one('res.partner',string="Supplier",readonly=True),
         'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product Unit of Measure'),
                                     required=True),
         'product_qty_remain': fields.float('Quantity Remain',
@@ -60,7 +61,9 @@ class pur_req_po_line(osv.osv_memory):
         'uom_po_id': fields.many2one('product.uom', 'PO Unit of Measure', required=True, ),
         'uom_po_factor': fields.float('UOM Ratio', digits=(12, 4), )
     }
-
+    _defaults = {
+        'supplier_prod_name': ' ',
+    }
     def _check_product_qty(self, cursor, user, ids, context=None):
         for line in self.browse(cursor, user, ids, context=context):
             #            if line.product_qty > line.product_qty_remain:
@@ -159,8 +162,10 @@ class pur_req_po(osv.osv_memory):
     _name = 'pur.req.po'
     _description = 'Requisition\'s Purchase Order'
     _columns = {
+        'pur_req_id': fields.many2one('pur.req',string='Purchase Requisition'),
         'line_ids': fields.one2many('pur.req.po.line', 'wizard_id', 'Products'),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, domain=[('supplier', '=', True)]),
+        'supplier_ids': fields.many2many("res.partner","pur_req_po_partner_rel","pur_req_po_id","partner_id",string='Suppliers'),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -183,35 +188,41 @@ class pur_req_po(osv.osv_memory):
         partner_id = None
         if req:
             uom_obj = self.pool.get('product.uom')
+            supplier_ids = []
             for line in req.line_ids:
-                if not line.generated_po:
-                    uom_po_qty = uom_obj._compute_qty_obj(cr, uid, line.product_uom_id, line.product_qty_remain,
-                                                          line.product_id.uom_po_id, context=context)
-                    uom_po_factor = line.product_id.uom_po_factor / line.product_uom_id.factor_display
-                    mfg_ids = line.mfg_ids and [mfg_id.id for mfg_id in line.mfg_ids] or []
-                    mfg_ids = [[6, False, mfg_ids]]
-                    line_data.append({'product_id': line.product_id.id,
-                                      'product_qty_remain': line.product_qty_remain,
-                                      'product_qty': line.product_qty_remain,
-                                      'product_uom_id': line.product_uom_id.id,
-                                      'price_unit': line.product_id.standard_price,
+                # if not line.generated_po and line.product_qty_remain > 0:
+                #     uom_po_qty = uom_obj._compute_qty_obj(cr, uid, line.product_uom_id, line.product_qty_remain,
+                #                                           line.product_id.uom_po_id, context=context)
+                #     uom_po_factor = line.product_id.uom_po_factor / line.product_uom_id.factor_display
+                #     mfg_ids = line.mfg_ids and [mfg_id.id for mfg_id in line.mfg_ids] or []
+                #     mfg_ids = [[6, False, mfg_ids]]
+                #     line_data.append({'product_id': line.product_id.id,
+                #                       'supplier_id': line.supplier_id.id,
+                #                       'product_qty_remain': line.product_qty_remain,
+                #                       'product_qty': line.product_qty_remain,
+                #                       'product_uom_id': line.product_uom_id.id,
+                #                       'price_unit': line.product_id.standard_price,
+                #
+                #                       'uom_po_qty_remain': uom_po_qty,
+                #                       'uom_po_qty': uom_po_qty,
+                #                       'uom_po_id': line.product_id.uom_po_id.id,
+                #                       'uom_po_price': line.product_id.uom_po_price,
+                #                       'uom_po_factor': uom_po_factor,
+                #
+                #                       'inv_qty': line.product_id.qty_available,
+                #                       'date_required': line.date_required,
+                #                       'req_line_id': line.id,
+                #                       'req_reason': line.req_reason,
+                #                       'mfg_ids': mfg_ids
+                #                       })
+                if line.supplier_id:
+                    if line.supplier_id.id not in supplier_ids:
+                        supplier_ids.append(line.supplier_id.id)
+                    #if partner_id == None and line.product_id.seller_id.active:
+                    #    partner_id = line.product_id.seller_id.id
 
-                                      'uom_po_qty_remain': uom_po_qty,
-                                      'uom_po_qty': uom_po_qty,
-                                      'uom_po_id': line.product_id.uom_po_id.id,
-                                      'uom_po_price': line.product_id.uom_po_price,
-                                      'uom_po_factor': uom_po_factor,
-
-                                      'inv_qty': line.product_id.qty_available,
-                                      'date_required': line.date_required,
-                                      'req_line_id': line.id,
-                                      'req_reason': line.req_reason,
-                                      'mfg_ids': mfg_ids
-                                      })
-                    if partner_id == None and line.product_id.seller_id.active:
-                        partner_id = line.product_id.seller_id.id
-
-            res.update({'line_ids': line_data, 'partner_id': partner_id})
+            res.update({'pur_req_id': req.id,'line_ids': line_data, 'partner_id': partner_id,
+                        'supplier_ids': [[6,False,supplier_ids]]})
         return res
 
     def view_init(self, cr, uid, fields_list, context=None):
@@ -296,29 +307,63 @@ class pur_req_po(osv.osv_memory):
         self._create_po(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-    def onchange_partner(self, cr, uid, ids, partner_id, lines, context):
-        prod_supp_obj = self.pool.get('product.supplierinfo')
-        line_rets = []
-        for line in lines:
-            if not line[2]:
-                continue
-            line_dict = line[2]
+    def onchange_partner(self, cr, uid, ids, pur_req_id, partner_id, context):
+        #prod_supp_obj = self.pool.get('product.supplierinfo')
+        line_data = []
+        if pur_req_id and partner_id:
+            req_obj = self.pool.get('pur.req')
+            req = req_obj.browse(cr, uid, pur_req_id, context=context)
+            if req:
+                uom_obj = self.pool.get('product.uom')
+                supplier_ids = []
+                for line in req.line_ids:
+                    if line.supplier_id:
+                        if not line.generated_po and line.product_qty_remain > 0 and line.supplier_id.id == partner_id:
+                            uom_po_qty = uom_obj._compute_qty_obj(cr, uid, line.product_uom_id, line.product_qty_remain,
+                                                                  line.product_id.uom_po_id, context=context)
+                            uom_po_factor = line.product_id.uom_po_factor / line.product_uom_id.factor_display
+                            #mfg_ids = line.mfg_ids and [mfg_id.id for mfg_id in line.mfg_ids] or []
+                            #mfg_ids = [[6, False, mfg_ids]]
+                            line_data.append({'product_id': line.product_id.id,
+                                              'supplier_id': line.supplier_id.id,
+                                              'product_qty_remain': line.product_qty_remain,
+                                              'product_qty': line.product_qty_remain,
+                                              'product_uom_id': line.product_uom_id.id,
+                                              'price_unit': line.product_id.standard_price,
+
+                                              'uom_po_qty_remain': uom_po_qty,
+                                              'uom_po_qty': uom_po_qty,
+                                              'uom_po_id': line.product_id.uom_po_id.id,
+                                              'uom_po_price': line.product_id.uom_po_price,
+                                              'uom_po_factor': uom_po_factor,
+
+                                              'inv_qty': line.product_id.qty_available,
+                                              'date_required': line.date_required,
+                                              'req_line_id': line.id,
+                                              'req_reason': line.req_reason,
+                                              #'mfg_ids': mfg_ids
+                                              })
+        #for line in lines:
+        #    if not line[2]:
+        #        continue
+        #    line_dict = line[2]
             # update the product supplier info
-            prod_supp_ids = prod_supp_obj.search(cr, uid, [('product_id', '=', line_dict['product_id']),
-                                                           ('name', '=', partner_id)])
-            if prod_supp_ids and len(prod_supp_ids) > 0:
-                prod_supp = prod_supp_obj.browse(cr, uid, prod_supp_ids[0], context=context)
-                line_dict.update({'supplier_prod_id': prod_supp.id,
-                                  'supplier_prod_name': prod_supp.product_name,
-                                  'supplier_prod_code': prod_supp.product_code,
-                                  'supplier_delay': prod_supp.delay})
-            else:
-                line_dict.update({'supplier_prod_id': False,
-                                  'supplier_prod_name': '',
-                                  'supplier_prod_code': '',
-                                  'supplier_delay': 1})
-            line_rets.append(line_dict)
-        return {'value': {'line_ids': line_rets}}
+            #prod_supp_ids = prod_supp_obj.search(cr, uid, [('product_id', '=', line_dict['product_id']),
+            #                                               ('name', '=', partner_id)])
+            #if prod_supp_ids and len(prod_supp_ids) > 0:
+            #    prod_supp = prod_supp_obj.browse(cr, uid, prod_supp_ids[0], context=context)
+            #    line_dict.update({'supplier_prod_id': prod_supp.id,
+            #                      'supplier_prod_name': prod_supp.product_name,
+            #                      'supplier_prod_code': prod_supp.product_code,
+            #                      'supplier_delay': prod_supp.delay})
+            #else:
+            #if line_dict['supplier_id'] != partner_id:
+                #line_dict.update({'supplier_prod_id': False,
+                #                  'supplier_prod_name': '',
+                #                  'supplier_prod_code': '',
+                #                  'supplier_delay': 1})
+                #line_rets.append(line_dict)
+        return {'value': {'line_ids': line_data}}
 
 
 pur_req_po()

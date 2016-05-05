@@ -112,7 +112,10 @@ class pur_req(osv.osv):
         for req in self.browse(cr, uid, ids, context=context):
             if not req.line_ids:
                 raise osv.except_osv(_('Error!'),_('You cannot confirm a purchase requisition order without any product line.'))
-            
+            for line in req.line_ids:
+                if not line.supplier_id:
+                    raise osv.except_osv(_('Error!'),
+                             _('Please fill all product suppliers before confirm purchase requisition.'))
         self.write(cr,uid,ids,{'state':'confirmed'})
         return True
 
@@ -224,7 +227,10 @@ class pur_req_line(osv.osv):
             generated_po = False
             req_qty = req_line.product_qty
             po_qty = 0
-            product_qty_remain = req_line.product_qty
+            #product_qty_remain = req_line.product_qty
+            product_qty_remain = 0
+            if req_line.product_qty > req_line.inv_qty:
+                product_qty_remain = req_line.product_qty - req_line.inv_qty
             po_qty_str = ''
             if req_line.po_lines_ids:
                 uom_obj = self.pool.get('product.uom')
@@ -256,7 +262,8 @@ class pur_req_line(osv.osv):
         'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product Unit of Measure'),required=True),
         'product_uom_id': fields.many2one('product.uom', 'Product UOM',required=True),
         'inv_uom_id': fields.related('product_id','uom_id',type='many2one',relation='product.uom', string='Inventory UOM',readonly=True),
-        'date_required': fields.date('Date Required',required=True),
+        #'date_required': fields.date('Date Required',required=True),
+        'date_required': fields.date('Date Required'),
         'inv_qty': fields.float('Inventory'),
         'req_emp_id': fields.many2one('hr.employee','Employee'),
         'req_dept_id': fields.related('req_emp_id','department_id',type='many2one',relation='hr.department',string='Department',readonly=True),
@@ -274,6 +281,7 @@ class pur_req_line(osv.osv):
         'order_state': fields.related('req_id', 'state', type='selection',string='Status',readonly=True,
                                       selection=[('draft','New'),('confirmed','Confirmed'),('approved','Approved'),('rejected','Rejected'),('in_purchase','In Purchasing'),('done','Purchase Done'),('cancel','Cancelled')]),
         'mfg_ids': fields.many2many('sale.product',string="MFG IDs"),
+        "supplier_id": fields.many2one('res.partner', "Supplier"),
                         
     }
     _rec_name = 'product_id'

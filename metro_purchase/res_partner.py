@@ -28,6 +28,19 @@ from openerp.osv import fields, osv
 class res_partner(osv.osv):
     _inherit = 'res.partner'
 
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        # +++ 04/22/2016 - HoangTK Add ability to search by using [id, in, many2many function field]
+        for key in range(0, len(args)):
+            domain = args[key]
+            if isinstance(domain, list):
+                if len(domain) == 3:
+                    if isinstance(domain[2], list) and domain[0] == 'id' and domain[1] == 'in':
+                        if len(domain[2]) == 1 and isinstance(domain[2][0], list):
+                            if domain[2][0][0] == 6 and domain[2][0][1] == False:
+                                args[key] = ['id', 'in', domain[2][0][2]]
+        # --- 04/22/2016 - HoangTK Add ability to search by using [id, in, many2many function field]
+        return super(res_partner, self).name_search(cr, uid, name, args, operator, context, limit)
+
     def _calc_bank(self, cr, uid, ids, fields, arg, context=None):
         result = dict((id, 
                        dict((field,None) for field in fields)

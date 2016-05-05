@@ -258,7 +258,6 @@ class purchase_order(osv.osv):
                     lines.append(line.id)
         self.pool.get('purchase.order.line').write(cr, uid, lines, {'state':'approved'},context)
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': fields.date.context_today(self,cr,uid,context=context), 'inform_type':'3'})
-        #TODO: Log the purchase history
         #+++ HoangTK - 01/12/2016 : Add records to purchase history
         self._create_purchase_history(cr, uid, ids, context)
         #--- HoangTK - 01/12/2016 : Add records to purchase history        

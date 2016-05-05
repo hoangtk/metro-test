@@ -80,6 +80,15 @@
                                 <option value="PURCH-ML">PURCH-ML</option>
                             </select>
                             </div>
+                            <group colspan="4" col="8">
+                                <field name="produced_type_qty"/>
+                                <field name="purchs_type_qty"/>
+                                <field name="purchoem_type_qty"/>
+                                <field name="purchm_type_qty"/>
+                                <field name="purchmc_type_qty"/>
+                                <field name="purchms_type_qty"/>
+                                <field name="purchml_type_qty"/>
+                            </group>
                             <field name="order_lines" nolabel="1" colspan="4">
                                 <tree string="Lines" editable="bottom">
                                     <field name="id" invisible="1"/>
@@ -365,6 +374,8 @@
             <field name="model">missing.erpno</field>
             <field name="arch" type="xml">
                 <tree string="Missing ERP No">
+                    <field name="creator"/>
+                    <field name="date"/>
                     <field name="order_id"/>
                 </tree>
             </field>
@@ -375,6 +386,8 @@
             <field name="arch" type="xml">
                 <form string="Missing ERP No" version="7.0">
                     <group col="4">
+                        <field name="creator"/>
+                        <field name="date"/>
                         <field name="order_id"/>
                         <separator string="Missing ERP NO" colspan="4"/>
                         <field name="lines" colspan="4" nolabel="1" widget="one2many_list">

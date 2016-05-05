@@ -87,6 +87,7 @@ instance.web.form.One2ManyList = instance.web.form.One2ManyList.extend({
             });
             this.$el.find("#part_type_select").change(function(element){
                 var selectValue = self.$el.find("#part_type_select").val();
+                var part_type_quantity = 0;
                 if (selectValue == 'ALL')
                     self.$el.find("td[data-field='part_type']").each(function(key,value){
                         $(this).parent().show();

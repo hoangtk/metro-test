@@ -27,5 +27,7 @@ import report
 import purchase
 import pur_req
 import res_company
+import hr
+import pur_req_reserve
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

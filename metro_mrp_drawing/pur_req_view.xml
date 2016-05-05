@@ -39,8 +39,9 @@
                                 <tree string="Products">
                                     <field name="sequence"/>
                                     <field name="pr_type" invisible="1"/>
-                                    <field name="product_id" on_change="onchange_product_id(product_id,contexxt)"/>
+                                    <field name="item_no" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                     <field name="erp_no"/>
+                                    <field name="product_id" on_change="onchange_product_id(product_id,contexxt)"/>
                                     <field name="name" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                     <field name="supplier_id"/>
                                     <field name="material" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
@@ -49,50 +50,39 @@
                                     <field name="product_qty" string="Total Quantity"/>
                                     <field name="inv_qty" string="Stock Quantity"/>
                                     <field name="inv_uom_id"/>
-                                    <field name="reserved_quantity" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
-                                    <field name="need_order_quantity" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
-                                    <field name="note" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
-                                    <field name="price"/>
-                                    <field name="po_info"/>
-                                    <field name="product_qty_remain" readonly="1"/>
                                     <field name="product_uom_id"
                                            on_change="onchange_product_uom(product_id,product_uom_id,context)"/>
-                                    <field name="date_required"/>
-
-                                    <field name="req_emp_id"/>
-                                    <field name="req_dept_id"/>
-                                    <field name="mfg_ids" widget="many2many_tags"/>
-                                    <field name="req_reason"/>
+                                    <field name="reserved_quantity" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
+                                    <field name="note" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
+                                    <field name="price" groups="base.group_erp_manager"/>
+                                    <field name="po_info"/>
+                                    <field name="product_qty_remain" readonly="1"/>
                                     <field name="req_ticket_no"/>
                                     <field name="generated_po"/>
                                 </tree>
                                 <form string="Products" version="7.0">
                                     <group>
                                         <group>
-                                            <field name="product_id" on_change="onchange_product_id(product_id)"/>
+                                            <field name="sequence"/>
+                                            <field name="item_no" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                             <field name="erp_no"/>
+                                            <field name="product_id" on_change="onchange_product_id(product_id)"/>
                                             <field name="supplier_id"/>
                                             <field name="material" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                             <field name="standard" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                             <field name="product_qty"/>
                                             <field name="uom_categ_id" invisible="1"/>
+                                            <field name="inv_qty"/>
+                                            <field name="inv_uom_id"/>
                                             <field name="product_uom_id"
                                                    on_change="onchange_product_uom(product_id,product_uom_id,context)"
                                                    domain="[('category_id','=',uom_categ_id)]"/>
-                                            <field name="inv_qty"/>
-                                            <field name="inv_uom_id"/>
                                             <field name="reserved_quantity" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
-                                            <field name="need_order_quantity" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                             <field name="note" attrs="{'invisible':[('pr_type','!=','mfg')]}"/>
                                         </group>
                                         <group>
                                             <field name="pr_type" invisible="1"/>
-                                            <field name="price"/>
-                                            <field name="date_required"/>
-                                            <field name="req_emp_id"/>
-                                            <field name="req_dept_id"/>
-                                            <field name="mfg_ids" widget="many2many_tags"/>
-                                            <field name="req_reason"/>
+                                            <field name="price" groups="base.group_erp_manager"/>
                                             <field name="req_ticket_no"/>
                                             <field name="product_qty_remain" readonly="1"/>
                                             <field name="generated_po"/>

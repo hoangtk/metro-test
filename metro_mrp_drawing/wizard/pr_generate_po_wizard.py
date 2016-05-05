@@ -43,7 +43,7 @@ class pr_generate_po_wizard(osv.osv_memory):
             supplier_ids = []
             supplier_quantity = {}
             for req_line in req.line_ids:
-                if req_line.supplier_id:
+                if req_line.supplier_id and req_line.product_qty_remain > 0:
                     if not req_line.supplier_id.id in supplier_ids:
                         supplier_ids.append(req_line.supplier_id.id)
                         supplier_quantity.update({req_line.supplier_id.id : req_line.product_qty_remain})
@@ -62,14 +62,15 @@ class pr_generate_po_wizard(osv.osv_memory):
                 req_lines = req_line_obj.browse(cr, uid, req_line_ids)
                 po_line_vals = []
                 for req_line in req_lines:
-                    po_line_vals.append({
-                        'product_id': req_line.product_id.id,
-                        'quantity': req_line.product_qty_remain,
-                        'price': req_line.price,
-                        'uom_id': req_line.product_uom_id.id,
-                        'req_line_id': req_line.id,
-                        'date_required': req_line.date_required,
-                    })
+                    if req_line.product_qty_remain > 0:
+                        po_line_vals.append({
+                            'product_id': req_line.product_id.id,
+                            'quantity': req_line.product_qty_remain,
+                            'price': req_line.price,
+                            'uom_id': req_line.product_uom_id.id,
+                            'req_line_id': req_line.id,
+                            'date_required': req_line.date_required,
+                        })
                 po_val.update({'line_ids': po_line_vals})
                 po_vals.append(po_val)
             res.update({'po_ids': po_vals})
@@ -200,7 +201,9 @@ class pr_generate_po_wizard_po_line(osv.osv_memory):
         'supplier_prod_code': fields.char(string='Supplier Product Code', required=False),
         'supplier_delay': fields.integer(string='Supplier Lead Time', required=False),
     }
-
+    _defaults = {
+        'supplier_prod_name': ' ',
+    }
     def do_generate(self, cr, uid, ids, context=None):
         return True
 

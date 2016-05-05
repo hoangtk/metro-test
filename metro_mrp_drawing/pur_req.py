@@ -1,7 +1,9 @@
+# -*- encoding: utf-8 -*-
 from openerp.osv import fields,osv
 from openerp.tools.translate import _
-from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT,DEFAULT_SERVER_DATE_FORMAT
 from datetime import datetime
+from openerp import netsvc
 PR_TYPES = [('normal', 'Normal PR'),
             ('sourcing', 'Sourcing PR'),
             ('procurement', 'Procurement PR'),
@@ -57,8 +59,8 @@ class pur_req_line(osv.osv):
                                   selection=PR_TYPES,
                                   string='PR Type', readonly=True, store=True, select=1),
         "erp_no": fields.char("ERP #", size=128,readonly=True),
+        "item_no": fields.char("Item No", size=128, readonly=True),
         "name": fields.char("Name", size=128),
-        "supplier_id": fields.many2one('res.partner', "Supplier"),
         "material": fields.char("Material", size=128, ),
         "standard": fields.char("Standard", size=128, readonly=True),
         "quantity_per_unit": fields.float("Quantity Per Unit", readonly=True),
@@ -74,23 +76,99 @@ class pur_req_line(osv.osv):
         if result:
             line = self.browse(cr, uid, result,context=context)
             sequence = len(line.req_id.line_ids)
-            self.write(cr, uid, [result],{'sequence': sequence})
+            super(pur_req_line,self).write(cr, uid, [result],{'sequence': sequence})
+            req_history_obj = self.pool.get('pur.req.history')
+            req_history_obj.create(cr, uid, {
+                'pur_req_id': line.req_id.id,
+                'user_id': uid,
+                'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
+                'content': _('Create Purchase Request Line'),
+                'vals': '%s' % (vals),
+            })
         return result
+    def write(self, cr, uid, ids, vals, context=None):
+        result = super(pur_req_line, self).write(cr, uid, ids, vals,context=context)
+        req_history_obj = self.pool.get('pur.req.history')
+        for line in self.browse(cr, uid, ids, context=context):
+            req_history_obj.create(cr, uid, {
+                'pur_req_id': line.req_id.id,
+                'user_id': uid,
+                'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
+                'content': _('Update Purchase Request Line'),
+                'vals': '%s' % (vals),
+            })
     _order = "sequence asc"
 class pur_req(osv.osv):
     _name = "pur.req"
     _inherit = "pur.req"
+
+    def _get_days_progress(self, cr, uid, ids, name, args, context=None):
+        result = {}
+        for req in self.browse(cr, uid, ids):
+            result[req.id] = 0
+            if req.date_confirm:
+                date_now = date_now = datetime.now()
+                date_confirm = datetime.strptime(req.date_confirm, DEFAULT_SERVER_DATETIME_FORMAT)
+                delta = date_now - date_confirm
+                result[req.id] = delta.days
+        return result
+
+    def reserved_products(self, cr, uid, pr_ids):
+        pr_reserve_obj = self.pool.get('pur.req.reserve')
+        pr_line_obj = self.pool.get('pur.req.line')
+        for pr in self.browse(cr, uid, pr_ids):
+            for line in pr.line_ids:
+                reserve_vals = {
+                    'req_id': pr.id,
+                    'product_id': line.product_id.id,
+                    'location_id': pr.warehouse_id.lot_stock_id.id,
+                }
+                if line.product_qty >= line.product_id.qty_available:
+                    reserve_vals.update({
+                        'product_qty': line.product_id.qty_available
+                    })
+                    pr_line_obj.write(cr, uid, [line.id], {
+                        'reserved_quantity': line.product_id.qty_available,
+                        'inv_qty': line.product_id.qty_available,
+                    })
+                else:
+                    reserve_vals.update({
+                        'product_qty': line.product_qty
+                    })
+                    pr_line_obj.write(cr, uid, [line.id], {
+                        'reserved_quantity': line.product_qty,
+                        'inv_qty': line.product_qty,
+                    })
+                pr_reserve_obj.create(cr, uid, reserve_vals)
+        return True
+
+    def unreserved_products(self, cr, uid, pr_ids):
+        pr_reserve_obj = self.pool.get('pur.req.reserve')
+        pr_reserve_ids = pr_reserve_obj.search(cr, uid, [('req_id', 'in', pr_ids)])
+        pr_reserve_obj.unlink(cr, uid, pr_reserve_ids)
+
+    def wkf_confirm_req(self, cr, uid, ids, context=None):
+        res = super(pur_req,self).wkf_confirm_req(cr, uid, ids, context=context)
+        self.reserved_products(cr, uid, ids)
+        return res
+
+    def wkf_cancel_req(self, cr, uid, ids, context=None):
+        res = super(pur_req, self).wkf_cancel_req(cr, uid, ids, context=context)
+        self.unreserved_products(cr, uid, ids)
+        return res
+
     _columns = {
         'pr_type': fields.selection(PR_TYPES,string='PR Type'),
         'drawing_order_id': fields.many2one('drawing.order','Drawing Order',readonly=True),
         'date_create': fields.datetime('Creation Date', readonly=True),
+        'date_confirm': fields.datetime('Confirm Date', readonly=True),
         'unit': fields.many2one('product.product','Unit',readonly=True),
         'is_full_pr': fields.boolean('Is Full PR or Sub-Assembly?'),
         'engineer': fields.many2one('res.users','Engineer',readonly=True),
         'assigned_to': fields.many2one('res.users','Assigned To',readonly=True),
         'delivery_date': fields.date('Delivery date (ETA)'),
         'progress': fields.float('Progress',readonly=True),
-        'days_progress': fields.integer('Days in progress',readony=True),
+        'days_progress': fields.function(_get_days_progress,string='Days in progress',type="float",readony=True),
         'supplier_no': fields.integer('Supplier No',readonly=True),
         'history_ids': fields.one2many('pur.req.history','pur_req_id','History',ondelete='cascade',readonly=True),
         'move1_lines': fields.one2many('pur.req.move1','pur_req_id','Move1 Lines',ondelete='cascade',readonly=True),
@@ -130,6 +208,8 @@ class pur_req(osv.osv):
             })
         return result
     def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('state',False) == 'confirmed':
+            vals.update({'date_confirm': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)})
         result = super(pur_req, self).write(cr, uid, ids, vals, context=context)
         if 'state' in vals:
             req_history_obj = self.pool.get('pur.req.history')
@@ -141,7 +221,10 @@ class pur_req(osv.osv):
                     'content': _('State Changed to %s') % vals['state'],
                     'vals': '%s' % (vals),
                 })
+            if vals['state'] == 'done':
+                self.unreserved_products(cr, uid, ids)
         return result
+
     def update_move_lines(self, cr, uid, po_ids, context=None):
         req_ids = []
         purchase_order_obj = self.pool.get('purchase.order')

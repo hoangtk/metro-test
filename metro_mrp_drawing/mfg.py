@@ -445,7 +445,7 @@ class mrp_production(osv.osv):
                 all_steps = {}
                 drawing_order = drawing_order_obj.browse(cr, uid, drawing_order_ids[0])
                 for order_line in drawing_order.order_lines:
-                    steps = drawing_order_obj._split_work_steps(order_line.work_steps)
+                    steps = drawing_order_obj.split_work_steps(order_line.work_steps)
                     for step in steps:
                         if not step in all_steps:
                             all_drawing_steps.append(step)
@@ -483,7 +483,7 @@ class mrp_production(osv.osv):
                 #Update status all steps in part to Created
                 for order_line in drawing_order.order_lines:
                     order_vals = {}
-                    steps = drawing_order_obj._split_work_steps(order_line.work_steps)
+                    steps = drawing_order_obj.split_work_steps(order_line.work_steps)
                     order_vals.update({'status': 'Created'})
                     drawing_order_line_obj.write(cr, uid, [order_line.id], order_vals)
             project_task_obj.unlink(cr, uid, duplicate_task_ids)
@@ -501,7 +501,7 @@ class mrp_production(osv.osv):
                         ('id','in',drawing_order_line_ids)
                     ],order = 'item_no asc')
                     for order_line in drawing_order_line_obj.browse(cr, uid, drawing_order_line_ids):
-                        steps = drawing_order_obj._split_work_steps(order_line.work_steps)
+                        steps = drawing_order_obj.split_work_steps(order_line.work_steps)
                         if task_id.dept_code not in steps:
                             continue
                         task_line_vals = {
@@ -789,7 +789,7 @@ class project_task(osv.osv):
                 if dept_code == order_line.last_step and is_done:
                     order_line_vals.update({'status': _('Done')})
                 elif dept_code != order_line.last_step:
-                    steps = drawing_order_obj._split_work_steps(order_line.work_steps)
+                    steps = drawing_order_obj.split_work_steps(order_line.work_steps)
                     #Move parts
                     next_step = ""
                     for index, step in enumerate(steps):

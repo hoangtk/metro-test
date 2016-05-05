@@ -28,7 +28,7 @@
         """,
     'author': 'Metro Tower Trucks',
     'website': 'http://www.metrotowtrucks.com',
-    'depends': ["web", "metro", "metro_project","metro_purchase"],
+    'depends': ["web", "metro", "metro_project","metro_purchase","metro_hr","metro_mrp_id_stock"],
     'css' : [
         "static/src/css/mrp_drawing.css",
         "static/src/lib/defaultTheme.css",
@@ -53,6 +53,7 @@
              'wizard/generate_pr_wizard.xml',
              'wizard/update_do_bom.xml',
              'wizard/print_pr_wizard.xml',
+             'wizard/generate_pr_xls_wizard.xml',
              'upload_multi_drawings_view.xml',
              'drawing_order_view.xml',
              'drawing_step_view.xml',

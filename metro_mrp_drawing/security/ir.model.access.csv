@@ -6,3 +6,5 @@ access_drawing_order_history,drawing.order.history,model_drawing_order_history,m
 access_project_task_modifyhistory,project.task.modifyhistory,model_project_task_modifyhistory,,1,1,1,0
 access_missing_erpno,missing.erpno,model_missing_erpno,,1,1,1,1
 access_missing_erpno_line,missing.erpno.line,model_missing_erpno_line,,1,1,1,1
+access_pur_req_reserve,pur.req.reserve,model_pur_req_reserve,,1,1,1,1
+

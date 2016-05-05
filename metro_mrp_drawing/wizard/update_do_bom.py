@@ -36,20 +36,20 @@ class update_do_bom(osv.osv_memory):
         if len(error_logs) > 0:
             raise osv.except_osv(_('Error!'),
                                  _('BOM File error, please check bom file!.'))
-        old_bom_values = {}
-        new_bom_values = {}
-        modify_erp_nos = []
+        old_bom_values = []
+        new_bom_values = []
+        modify_value_keys = []
         for line in order.order_lines:
-            old_bom_values[line.erp_no] = {
+            old_bom_values.append({
                 'line_id': line.id,
                 'item_no': line.item_no,
                 'erp_no': line.erp_no,
-                'part_number':  line.product_id.name,
+                'part_name':  line.product_id.name,
                 'product_id': line.product_id.id,
                 'part_type': line.part_type,
                 'work_steps': line.work_steps,
                 'bom_qty': line.bom_qty,
-            }
+            })
         inputStr = StringIO.StringIO()
         inputStr.write(update_do_bom.bom_file.decode('base64'))
         workbook = xlrd.open_workbook(file_contents=inputStr.getvalue())
@@ -64,60 +64,58 @@ class update_do_bom(osv.osv_memory):
                 bom_qty = int(bom_line['bom_qty'])
                 part_type = bom_line['part_type']
                 work_steps = bom_line['work_steps']
-                new_bom_values[erp_no] = {
+                new_bom_values.append({
                         'item_no': item_no,
                         'erp_no': erp_no,
-                        'part_number': part_name,
+                        'part_name': part_name,
                         'part_type': part_type,
                         'work_steps': work_steps,
                         'bom_qty': bom_qty,
-                        }
-                #Check if this part exist in old bom
-                if erp_no not in old_bom_values:
-                    raise osv.except_osv(_("Error!"),_('You are not allow to add new part: %s to bom!') % (part_name,))
-                old_part_values = old_bom_values[erp_no]
-                if part_type != old_part_values['part_type'] or \
-                    work_steps != old_part_values['work_steps']:
-                    raise osv.except_osv(_("Error!"),_('Part type and work steps of part %s not match the old one') % (part_name,))
-                if bom_qty < old_part_values['bom_qty']:
-                    raise osv.except_osv(_("Error!"),_('You are not allow to decrease the quantity of part: %s') % (part_name,))
-                elif bom_qty > old_part_values['bom_qty']:
-                    modify_erp_nos.append(erp_no)
+                        })
             row += 1
-        for old_erp_no in old_bom_values:
-            if old_erp_no not in new_bom_values:
-                raise osv.except_osv(_("Error!"),_('Old part: %s not exists in new bom file') % (old_erp_no,))
+        if len(old_bom_values) != len(new_bom_values):
+            raise osv.except_osv(_("Error!"), _('You are not allow to add/remove new part: %s to bom!'))
+        for key in range(0,len(old_bom_values)):
+            old_value = old_bom_values[key]
+            new_value = new_bom_values[key]
+            if old_value['part_name'] != new_value['part_name']:
+                raise osv.except_osv(_("Error!"),
+                                     _('Part number %s not match the old one') % new_value['part_name'])
+            if old_value['part_type'] != new_value['part_type']:
+                raise osv.except_osv(_("Error!"),
+                                     _('Part type of part %s not match the old one') % new_value['part_name'])
+            if old_value['work_steps'] != new_value['work_steps']:
+                raise osv.except_osv(_("Error!"),
+                                     _('Work steps of part %s not match the old one') % new_value['part_name'])
+            if  new_value['bom_qty'] < old_value['bom_qty']:
+                raise osv.except_osv(_("Error!"),
+                                     _('You are not allow to decrease the quantity of part: %s') % new_value['part_name'])
+            elif new_value['bom_qty'] > old_value['bom_qty']:
+                modify_value_keys.append(key)
         #2. Update this bom file to DO
-        big_assembly_qty = 1
-        big_assembly_bom_ids = bom_obj.search(cr, uid, [
-                                                        ('bom_id','=',order.mo_id.bom_id.id),
-                                                        ('product_id','=',order.product_id.id),
-                                                        ])
-        if len(big_assembly_bom_ids) > 0 :
-            big_assembly_boms = bom_obj.browse(cr, uid, big_assembly_bom_ids)
-            if order.mo_id.bom_id.product_qty > 0:
-                big_assembly_qty = big_assembly_boms[0].product_qty /order.mo_id.bom_id.product_qty
-        for modify_erp_no in modify_erp_nos:
-            new_bom_qty = new_bom_values[modify_erp_no]['bom_qty']
-            need_qty = bom_qty * big_assembly_qty
-            steps = drawing_order_obj._split_work_steps(work_steps)
+        big_assembly_qty = drawing_order_obj.get_big_subassembly_qty(cr, uid, order)
+        for key in modify_value_keys:
+            new_value = new_bom_values[key]
+            old_value = old_bom_values[key]
+            new_bom_qty = new_value['bom_qty']
+            need_qty = new_bom_qty * big_assembly_qty
+            steps = drawing_order_obj.split_work_steps(work_steps)
             vals = {'status': _('On Working')}
             for step in steps:
                 vals.update({'%s_need_qty' % step : need_qty})
             vals.update({'%s_prepare_qty' % step[0]: need_qty})
-            drawing_order_line_obj.write(cr, uid, [old_bom_values[modify_erp_no]['line_id']], vals)
+            drawing_order_line_obj.write(cr, uid, [old_value['line_id']], vals)
             task_ids = task_obj.search(cr, uid, [('drawing_order_id','=',order.id),
                                                  ('dept_code','in',steps)])
             task_line_ids = task_line_obj.search(cr, uid, [('task_id','in',task_ids),
-                                                           ('product_id','=',old_bom_values[modify_erp_no]['product_id'])])
+                                                           ('product_id','=', old_value['product_id'])])
             task_line_obj.write(cr, uid, task_line_ids, {
                 'need_qty': need_qty,
             })
-            #TODO: Check first steps
             first_step_task_ids = task_obj.search(cr, uid, [('drawing_order_id','=',order.id),
                                                  ('dept_code','=',steps[0])])
             first_step_task_line_ids = task_line_obj.search(cr, uid, [('task_id','in',first_step_task_ids),
-                                                           ('product_id','=',old_bom_values[modify_erp_no]['product_id'])])
+                                                           ('product_id','=',old_value['product_id'])])
             task_line_obj.write(cr, uid, first_step_task_line_ids, {
                 'prepare_qty': need_qty,
             })

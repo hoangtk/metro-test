@@ -53,8 +53,9 @@ class warranty_cases(osv.osv):
         #+++ HoangTK - 04/15/2016 - Fix can not upload attachment
         #'attachment_id': fields.many2one('ir.attachment','Attachments'),
         'attachment_file_name': fields.char('Attachment File Name',size=128),
-        'attachment_id': fields.function(utils.field_get_file, fnct_inv=utils.field_set_file, string="Attachment",
-                                    type="binary", multi="_get_file"),
+        #'attachment_id': fields.function(utils.field_get_file, fnct_inv=utils.field_set_file, string="Attachment",
+        #                            type="binary", multi="_get_file"),
+        'attachment_id': fields.binary(string="Attachment"),
         #--- HoangTK - 04/15/2016 - Fix can not upload attachment
         'note': fields.text('Notes'),
         'active': fields.boolean('Active'),
