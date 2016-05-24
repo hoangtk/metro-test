@@ -26,7 +26,9 @@ from tools.translate import _
 from openerp.addons.metro_purchase.purchase import deal_args
 from openerp.addons.stock.product import product_product as stock_product
 import openerp.addons.decimal_precision as dp
-
+from datetime import datetime
+from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT,DEFAULT_SERVER_DATE_FORMAT
+from openerp.tools.config import config
 
 class product_sequence(osv.osv):
     _name = "product.sequence"
@@ -322,6 +324,7 @@ class product_product(osv.osv):
                                              "Location with 'internal' type."),
         # +++ HoangTK - 01/08/2015 : Add marketplace to product
         'marketplaces': fields.one2many('product.marketplace', 'product_id', 'Marketplaces'),
+        'history_ids': fields.one2many('product.history', 'product_id', 'History', readonly=True),
         # --- HoangTK - 01/08/2015 : Add marketplace to product
     }
     _defaults = {
@@ -409,15 +412,101 @@ class product_product(osv.osv):
             vals['default_code'] = self.generate_seq(cr, uid, context=context)  # generate_seq  需要调用这个方法返回一个code
         new_id = super(product_product, self).create(cr, uid, vals, context)
         self._orderpoint_update(cr, uid, [new_id], vals, context)
+        #+++ HoangTK - Add to history
+        if new_id:
+            product_history_obj = self.pool.get('product.history')
+            product = self.browse(cr, uid, new_id, context=context)
+            product_history_obj.create(cr, uid, {
+                'product_id': new_id,
+                'user_id': uid,
+                'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
+                'content': _('Create Product'),
+                'name': product.name,
+                'part_number': product.default_code,
+                'cn_name': product.cn_name,
+            })
+        #--- HoangTK - Add to history
         return new_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
         self._check_write_vals(cr, uid, vals, ids=ids, context=context)
-        resu = super(product_product, self).write(cr, uid, ids, vals, context=context)
         self._orderpoint_update(cr, uid, ids, vals, context)
+        track_fields = {'name' : 'Name',
+                        'cn_name': 'Chinese Name',
+                        'default_code': 'Part Number',}
+        product_history_obj = self.pool.get('product.history')
+        for field,description in track_fields.iteritems():
+            if field in vals:
+                for product in self.browse(cr, uid, ids, context=context):
+                    content = track_fields[field] + ' Changed (%s->%s)' % (getattr(product,field),vals[field])
+                    product_history_obj.create(cr, uid, {
+                        'product_id': product.id,
+                        'user_id': uid,
+                        'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
+                        'content': content,
+                        'name': product.name,
+                        'part_number': product.default_code,
+                        'cn_name': product.cn_name,
+                    })
+        resu = super(product_product, self).write(cr, uid, ids, vals, context=context)
         return resu
+
+    def unlink(self, cr, uid, ids, context=None):
+        if ids:
+            product_history_obj = self.pool.get('product.history')
+            for product in self.browse(cr, uid, ids, context=context):
+                product_history_obj.create(cr, uid, {
+                    'user_id': uid,
+                    'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
+                    'content': _('Delete Product'),
+                    'name': product.name,
+                    'part_number': product.default_code,
+                    'cn_name': product.cn_name,
+                })
+        return super(product_product, self).unlink(cr, uid, ids, context=context)
+
+    def _warehouse_daily_report(self, cr, uid, ids=None, context=None):
+        date_now = datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)
+        date_start = date_now + ' 00:00:00'
+        product_history_obj = self.pool.get('product.history')
+        group_obj = self.pool.get('res.groups')
+        informer_obj = self.pool.get('order.informer')
+        history_ids = product_history_obj.search(cr, uid, [('date', '>=', date_start)],order="date desc")
+        email_subject = 'Warehouse daily report %s' % date_now
+        email_content = 'Nothing to report'
+        email_from = config['email_from']
+        email_to = []
+        email_cc = []
+        email_msgs = []
+        group_ids = group_obj.search(cr, uid, [('name','=',_('Product Oversight'))])
+        if group_ids:
+            email_to = informer_obj._get_group_id_emails(cr, uid, group_ids,context=context)
+        if history_ids:
+            email_content = '<table>'\
+                            '<tr>'\
+                            '<th>Date</th>'\
+                            '<th>Part number</th>'\
+                            '<th>Part name</th>'\
+                            '<th>Change made</th>'\
+                            '<th>User</th>'\
+                            '</tr>'
+            for history in product_history_obj.browse(cr, uid, history_ids):
+                email_content += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>'%(
+                    history.date,
+                    history.part_number,
+                    history.name,
+                    history.content,
+                    history.user_id.name,
+                )
+            email_content += "</table>"
+            email_msgs.append(
+                {'from': email_from, 'to': email_to, 'cc':email_cc, 'subject': email_subject, 'body': email_content,
+                 'subtype': 'html',
+                 'model': 'product.history', 'model_ids': history_ids, 'inform_type_new': ''})
+            informer_obj._send_emails(cr, uid, email_msgs, context=context)
+        return True
 
     def get_sequence(self, cr, uid, ids, context=None):
         if context is None:
@@ -679,3 +768,20 @@ class product_marketplace(osv.osv):
 
 product_marketplace()
 # --- HoangTK - 01/08/2015 : Add product marketplace table
+
+#+++ HoangTK - 11/05/2016 : Track product history
+class product_history(osv.osv):
+    _name = 'product.history'
+    _description = 'Product History'
+    _columns = {
+        'date': fields.datetime('Modified Date', readonly=True),
+        'product_id': fields.many2one('product.product', 'Product', readonly=True),
+        'name': fields.char('Part Name', size=128, readonly=True),
+        'cn_name': fields.char('Chinese Name', size=128, readonly=True),
+        'part_number': fields.char('Part number', size=128, readonly=True),
+        'user_id': fields.many2one('res.users', 'User', readonly=True),
+        'content': fields.char('Content', readonly=True),
+        'vals': fields.char('Update Values', readonly=True, size=256),
+    }
+    _order = 'date desc'
+#--- HoangTK - 11/05/2016 : Track product history

@@ -27,6 +27,7 @@ class project_task_modifyhistory(osv.osv):
         'content': fields.char('Content',readonly=True),
         'vals': fields.char('Update Values',readonly=True,size=256),
     }
+    _order = "date desc"
 project_task_modifyhistory()
 class project_task_completion(osv.osv):
     _name = "project.task.completion"

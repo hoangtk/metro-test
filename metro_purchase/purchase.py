@@ -999,6 +999,18 @@ class purchase_order_line(osv.osv):
             self.pool.get('product.product').write(cr,uid,[po_line.product_id.id],{'uom_po_price':vals["price_unit"]},context=context)
             
         return resu
+
+    def _fix_sequence(self, cr, uid, ids=None, context=None):
+        order_obj = self.pool.get('purchase.order')
+        order_ids = order_obj.search(cr, uid, [], context=context)
+        for order in order_obj.browse(cr, uid, order_ids,context=context):
+            sequence = 1
+            for line in order.order_line:
+                super(purchase_order_line, self).write(cr, uid, [line.id], {'sequence': sequence})
+                sequence += 1
+        return True
+
+
     def create(self, cr, user, vals, context=None):
         #add the procut_uom set by product's purchase uom
         if 'product_uom' not in vals:
@@ -1026,7 +1038,13 @@ class purchase_order_line(osv.osv):
             log_obj = self.pool.get('change.log.po.line')
             log_vals = {'po_id':po_line.order_id.id,'po_line_id':po_line.id,'product_id':po_line.product_id.id,
                                 'field_name':'Add Product','value_old':'','value_new':'price:%s, quantity:%s'%(po_line.product_qty, po_line.price_unit)}
-            log_obj.create(cr,uid,log_vals,context=context)                    
+            log_obj.create(cr,uid,log_vals,context=context)
+        #+++ HoangTK - 05/13/2016 - Update sequence number
+        sequence = len(po_line.order_id.order_line)
+        super(purchase_order_line, self).write(cr, uid, [po_line.id],{
+            'sequence': sequence,
+        })
+        #--- HoangTK - 05/13/2016 - Update sequence number
         return resu  
     def unlink(self, cr, uid, ids, context=None):
         #only the draft,canceled can be deleted
@@ -1059,7 +1077,7 @@ class purchase_order_line(osv.osv):
         """
         res = super(purchase_order_line,self).onchange_product_id(cr, uid, ids, pricelist_id, product_id, qty, uom_id,
                                 partner_id, date_order, fiscal_position_id, date_planned,name, price_unit, context)
-        if product_id and context is not None and not res['value'].get('taxes_id') and context.get('po_taxes_id')[0][2]: 
+        if product_id and context is not None and not res['value'].get('taxes_id') and context.get('po_taxes_id')[0][2]:
             # - determine taxes_id when purchase_header has taxes_id and produt has not own taxes setting
             account_fiscal_position = self.pool.get('account.fiscal.position')
             account_tax = self.pool.get('account.tax')

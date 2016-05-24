@@ -475,7 +475,20 @@ class mrp_production(osv.osv):
         if 'priority' in vals.keys():
             self.set_priority(cr,uid,ids,vals['priority'],context)
         return resu
-    
+
+    def action_in_production(self, cr, uid, ids):
+        """ Changes state to In Production and writes starting date.
+        @return: True
+        """
+        # obj = self.browse(cr, uid, ids)[0]
+        # workcenter_pool = self.pool.get('mrp.production.workcenter.line')
+        # wf_service = netsvc.LocalService("workflow")
+        # for prod in self.browse(cr, uid, ids):
+        #     if prod.workcenter_lines:
+        #         wf_service.trg_validate(uid, 'mrp.production.workcenter.line', prod.workcenter_lines[0].id,
+        #                                 'button_start_working', cr)
+        return super(mrp_production, self).action_in_production(cr, uid, ids)
+
     def set_priority(self,cr,uid,ids,priority,context=None):
         if context is None:
             context = {}

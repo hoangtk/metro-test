@@ -45,6 +45,16 @@ class missing_erpno(osv.osv):
         'order_id': fields.many2one('drawing.order', string='Drawing Order', readonly=True),
         'lines': fields.one2many('missing.erpno.line','missing_id', string='Missing Lines', ondelete="cascade"),
     }
+
+    def update_bom_file(self, cr, uid, ids, context=None):
+        drawing_order_obj = self.pool.get('drawing.order')
+        order_ids = []
+        for missing_erpno in self.browse(cr, uid, ids):
+            order_ids.append(missing_erpno.order_id.id)
+        drawing_order_obj.update_missing_erpno(cr, uid, order_ids, context=context)
+        return self.pool.get('warning').info(cr, uid, title='Information', message=_(
+                "Bom file has been updated!"))
+
     _defaults = {
         'creator': lambda self,cr, uid, c: uid,
         'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
@@ -73,6 +83,7 @@ class drawing_order_history(osv.osv):
         'content': fields.char('Content', readonly=True),
         'vals': fields.char('Update Values', readonly=True, size=256),
     }
+    _order = 'date desc'
 drawing_order_history()
 
 
@@ -925,7 +936,7 @@ class drawing_step(osv.osv):
 class drawing_order_line(osv.osv):
     _name = "drawing.order.line"
     _description = "Drawing Order Line"
-    _rec_name = "drawing_file_name"
+    #_rec_name = "drawing_file_name"
     # +++ HoangTK - 11/06/2015: Order by Drawing PDF Name asc
     _order = "item_no asc"
 
@@ -940,7 +951,7 @@ class drawing_order_line(osv.osv):
                 department_obj = self.pool.get('hr.department')
                 department_ids = department_obj.search(cr, uid, [('code', 'in', WORK_STEP_LIST)], order='sequence asc')
                 departments = department_obj.browse(cr, uid, department_ids)
-                work_step_fields = '<group colspan="4" col="72">'
+                work_step_fields = '<group colspan="4" col="%s">'% (len(departments)*6)
                 for department in departments:
                     work_step_fields = work_step_fields + \
                                        "<label string='%s P' colspan='2' class='metro_header_label'/> \
@@ -990,7 +1001,7 @@ class drawing_order_line(osv.osv):
         'main_part_id': fields.related('order_id', 'main_part_id', type='many2one', relation='product.product',
                                        string='Main Product'),
         # +++ HoangTK - 11/17/2015: Add quantity and work steps to drawing order lines
-        'name': fields.related('product_id', 'name', string="Name", type="string", readonly=True),
+        'name': fields.related('product_id', 'name', string="Name", type="char", readonly=True),
         'bom_qty': fields.integer('BOM Qty', readonly=True),
         'P_prepare_qty': fields.integer('P P', readonly=True),
         'P_done_qty': fields.integer('P D'),
@@ -1189,7 +1200,7 @@ class drawing_order_line(osv.osv):
         if result:
             order_line = self.browse(cr, uid, result)
             order_history_obj.create(cr, uid, {
-                'po_id': order_line.order_id.id,
+                'drawing_order_id': order_line.order_id.id,
                 'user_id': uid,
                 'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
                 'content': _('Create Drawing Order Line'),
@@ -1212,7 +1223,7 @@ class drawing_order_line(osv.osv):
         order_history_obj = self.pool.get('drawing.order.history')
         for order_line in self.browse(cr, uid, ids):
             order_history_obj.create(cr, uid, {
-                'po_id': order_line.order_id.id,
+                'drawing_order_id': order_line.order_id.id,
                 'user_id': uid,
                 'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
                 'content': _('Update Drawing Order Line'),

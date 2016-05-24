@@ -35,6 +35,7 @@
                     <notebook>
                         <page string="Products">
                             <button name="print_pr_mfg" string="Print List" type="object" class="oe_inline"/>
+                            <div><input type="checkbox" id="hide_supplier_line"/> Hide lines already have supplier</div>
                             <field name="line_ids">
                                 <tree string="Products">
                                     <field name="sequence"/>

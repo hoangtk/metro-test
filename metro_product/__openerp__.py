@@ -46,7 +46,8 @@
         'security/ir.model.access.csv',
         'wizard/product_set_printflag.xml',
         'wizard/product_batch_query_view.xml',
-        'wizard/products_approve.xml'
+        'wizard/products_approve.xml',
+        #'product_ir_cron_data.xml',
     ],
     'demo_xml': [],
     'test': [],

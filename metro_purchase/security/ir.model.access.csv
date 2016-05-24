@@ -6,3 +6,4 @@ access_pur_req_line_buyer,pur.req.line buyer,model_pur_req_line,metro_purchase.g
 access_change_log_po_line,change.log.po.line,model_change_log_po_line,,1,1,1,1
 access_pur_req_checker,pur.req checker,model_pur_req,metro_purchase.group_pur_req_checker,1,1,0,0
 access_pur_req_line_checker,pur.req.line checker,model_pur_req_line,metro_purchase.group_pur_req_checker,1,1,0,0
+access_purchase_history_user,purchase.history user,model_purchase_history,base.group_user,1,1,1,1

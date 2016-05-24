@@ -85,6 +85,12 @@ instance.web.form.One2ManyList = instance.web.form.One2ManyList.extend({
                         $(this).parent().toggle();
                 });
             });
+            this.$el.find("#hide_supplier_line").click(function(element){
+                self.$el.find("td[data-field='supplier_id']").each(function(key,value){
+                    if ($(this).text())
+                        $(this).parent().toggle();
+                });
+            });
             this.$el.find("#part_type_select").change(function(element){
                 var selectValue = self.$el.find("#part_type_select").val();
                 var part_type_quantity = 0;

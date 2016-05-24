@@ -125,6 +125,7 @@
         <field name="arch" type="xml">
             <tree fonts="bold:message_unread==True" colors="blue:state == 'confirmed';green:state == 'in_purchase';grey:state == 'cancel';" string="Purchase Requisition">
                 <field name="message_unread" invisible="1"/>
+                <field name="id"/>
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="user_id"/>

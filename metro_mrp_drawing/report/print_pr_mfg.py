@@ -21,8 +21,8 @@ class print_pr_mfg(report_sxw.rml_parse):
         if type=='all':
             return req.line_ids
         elif type=='missing':
-            for part in req.mfg_parts:
-                if part.stock_quantity < part.product_qty:
+            for part in req.line_ids:
+                if part.product_qty_remain > 0:
                     result.append(part)
         elif type == 'all_sort_by_supplier':
             line_ids = req_line_obj.search(self.cr, self.uid, [('req_id','=',req.id)], order="supplier_id asc")
@@ -31,7 +31,7 @@ class print_pr_mfg(report_sxw.rml_parse):
             line_ids = req_line_obj.search(self.cr, self.uid, [('req_id', '=', req.id)],
                                                order="supplier_id asc")
             for part in req_line_obj.browse(self.cr, self.uid, line_ids):
-                if part.stock_quantity < part.product_qty:
+                if part.product_qty_remain > 0:
                     result.append(part)
         return result
 report_sxw.report_sxw('report.pr.mfg.part','pur.req','addons/metro_mrp_drawing/report/pr_mfg_part.rml',parser=print_pr_mfg, header='internal')

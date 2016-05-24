@@ -6,3 +6,4 @@ access_metro_product_sequence_user,mttl.product.sequence user,model_product_sequ
 access_metro_product_attribute_user,mttl.product.attribute user,model_product_attribute,base.group_user,1,0,0,0
 access_metro_product_attribute_line_user,mttl.product.attribute.line user,model_product_attribute_line,base.group_user,1,0,0,0
 access_metro_product_marketplace_user,mttl.product.marketplace.user,model_product_marketplace,base.group_user,1,1,1,1
+access_metro_product_history_user,mttl.product.history.user,model_product_history,base.group_user,1,1,1,1

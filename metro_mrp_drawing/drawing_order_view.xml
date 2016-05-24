@@ -385,6 +385,11 @@
             <field name="model">missing.erpno</field>
             <field name="arch" type="xml">
                 <form string="Missing ERP No" version="7.0">
+    				<group>
+	                    <div class="oe_right oe_button_box" name="buttons">
+                            <button name="update_bom_file" string="Update Bom File" type="object" class="oe_inline" />
+	                    </div>
+    				</group>
                     <group col="4">
                         <field name="creator"/>
                         <field name="date"/>

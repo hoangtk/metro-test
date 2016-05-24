@@ -238,8 +238,8 @@ class pur_req(osv.osv):
                     'content': _('State Changed to %s') % vals['state'],
                     'vals': '%s' % (vals),
                 })
-            if vals['state'] == 'done':
-                self.unreserved_products(cr, uid, ids)
+            #if vals['state'] == 'done':
+            #    self.unreserved_products(cr, uid, ids)
         return result
 
     def update_move_lines(self, cr, uid, po_ids, context=None):

@@ -107,6 +107,7 @@ class generate_pr_wizard(osv.osv_memory):
         drawing_order_obj = self.pool.get('drawing.order')
         pur_req_obj = self.pool.get('pur.req')
         if drawing_order_ids:
+            pr_names = []
             for order in drawing_order_obj.browse(cr, uid, drawing_order_ids):
                 pur_req_ids = pur_req_obj.search(cr, uid, [
                     ('drawing_order_id', '=', order.id)
@@ -122,11 +123,15 @@ class generate_pr_wizard(osv.osv_memory):
                     'delivery_date': generate_pr.delivery_date,
                     'engineer': uid,
                 })
+                pr = pur_req_obj.browse(cr, uid, pur_req_id)
+                pr_names.append(pr.name)
                 sequence = 1
                 for order_line in order.order_lines:
                     bom_line = self._get_bom_line(cr, uid, order_line)
                     self._create_pr_line(cr, uid, pur_req_id,bom_line,sequence,generate_pr.delivery_date,order.id)
                     sequence += 1
+            return self.pool.get('warning').info(cr, uid, title='Information', message=_(
+                "PR [%s] has been created!")% ",".join(pr_names) )
         return True
 
 
